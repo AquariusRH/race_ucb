@@ -661,7 +661,50 @@ def print_highlight():
           crosstab_1 = pd.crosstab(filtered_df_1['No.'],filtered_df_1['Highlight']).sort_values(by='*', ascending=False)
           crosstab_1
 
+def run_ucb_prediction(win_odds, total_win_inv, horses, state, t):
+    n_horses = len(win_odds)
+    inv_per_horse = total_win_inv / win_odds if total_win_inv > 0 else np.zeros(n_horses)
+    inv_mean = np.mean(inv_per_horse) if np.mean(inv_per_horse) > 0 else 1
 
+    # 正規化動量
+    momentum = {}
+    for h in horses:
+        idx = h - 1
+        state['momentum_hist'][h].append(inv_per_horse[idx])
+        hist = state['momentum_hist'][h]
+        raw = hist[-1] - hist[-2] if len(hist) >= 2 else 0
+        momentum[h] = raw / (inv_mean + 1e-6)
+
+    # UCB 計算（防熱門）
+    ucb_values = {}
+    for h in horses:
+        n = max(state['selected_count'][h], 1)
+        exploration = 2.0 * np.sqrt(np.log(t) / n)
+        value_bonus = 1.0 / (win_odds[h-1] ** 0.5)
+        avg_sel = np.mean(list(state['selected_count'].values()))
+        penalty = -0.3 * (state['selected_count'][h] - avg_sel) ** 2
+        ucb_values[h] = momentum[h] * 2.0 + exploration + value_bonus + penalty
+
+    # 選 Top 4
+    top4 = sorted(ucb_values, key=ucb_values.get, reverse=True)[:4]
+    for h in top4:
+        state['selected_count'][h] += 1
+
+    # 建表格
+    table_data = []
+    for i, h in enumerate(horses):
+        table_data.append({
+            '馬號': h,
+            '馬名': race_dict[race_no]['馬名'][i],
+            '騎師': race_dict[race_no]['騎師'][i],
+            '賠率': f"{win_odds[i]:.2f}",
+            '動量': f"{momentum.get(h, 0):+.3f}",
+            '被選次數': state['selected_count'][h],
+            'UCB': f"{ucb_values.get(h, 0):.3f}",
+            '排名': f"Top {top4.index(h)+1}" if h in top4 else ""
+        })
+    df = pd.DataFrame(table_data).sort_values('UCB', ascending=False)
+    return df, top4
 
 def main(time_now,odds,investments,period):
   save_odds_data(time_now,odds)
@@ -979,41 +1022,65 @@ if not st.session_state.api_called:
       race_dataframes[race_number] = df
   
 top_container = st.container()
-# 定義單一的 placeholder
-placeholder = st.empty()
+if st.session_state.get('reset', False):
+    # 初始化狀態
+    st.session_state.update({
+        'odds_dict': {m: pd.DataFrame() for m in methodlist},
+        'investment_dict': {m: pd.DataFrame() for m in methodlist},
+        'overall_investment_dict': {m: pd.DataFrame() for m in methodlist + ['overall']},
+        'weird_dict': {m: pd.DataFrame(columns=['No.', 'error', 'odds', 'Highlight']) for m in methodlist},
+        'diff_dict': {m: pd.DataFrame() for m in methodlist + ['overall']},
+        'ucb_state': {
+            't': 0,
+            'selected_count': {i+1: 0 for i in range(len(race_dict[race_no]['馬號']))},
+            'momentum_hist': {i+1: [] for i in range(len(race_dict[race_no]['馬號']))},
+            'final_ucb_df': None,
+            'locked': False
+        }
+    })
 
-if st.session_state.reset:
-    with top_container:
-      st.write(f"DataFrame for Race No: {race_no}")
-      st.dataframe(race_dataframes[race_no], use_container_width=True)
-    odds_dict = {}
-    for method in methodlist:
-        odds_dict[method] = pd.DataFrame()
-    investment_dict = {}
-    for method in methodlist:
-        investment_dict[method] = pd.DataFrame()
-    overall_investment_dict = {}
-    for method in methodlist:
-        overall_investment_dict.setdefault(method, pd.DataFrame())
-    overall_investment_dict.setdefault('overall', pd.DataFrame())
-    weird_dict = {}
-    for method in methodlist:
-        weird_dict.setdefault(method, pd.DataFrame([], columns=['No.', 'error', 'odds', 'Highlight']))
-    diff_dict = {}
-    for method in methodlist:
-        diff_dict.setdefault(method, pd.DataFrame())
-    diff_dict.setdefault('overall', pd.DataFrame())
-    
+    placeholder = st.empty()
+    ucb_placeholder = st.empty()
 
-    # 使用 post time 作為條件
-    start_time = time.time()
-    end_time = start_time + 60*10000
-    while time.time()<=end_time:  # 在 post time 前更新
+    post_time = post_time_dict[race_no].astimezone(pytz.timezone('Asia/Hong_Kong'))
+    end_time = post_time + timedelta(minutes=30)  # 最多監測到開賽後 30 分
+
+    while datetime.now(pytz.timezone('Asia/Hong_Kong')) < end_time:
         with placeholder.container():
-            time_now = datetime.now() + datere.relativedelta(hours=8)
+            time_now = datetime.now(pytz.timezone('Asia/Hong_Kong'))
             odds = get_odds_data()
             investments = get_investment_data()
-            period = 2
-            
-            main(time_now, odds, investments, period)
+
+            # --- 你的原始分析 ---
+            main(time_now, odds, investments, period=2)
+
+            # --- UCB 預測 ---
+            if 'WIN' in odds and odds['WIN']:
+                win_odds = np.array([o if o != np.inf else 999 for o in odds['WIN']])
+                total_win_inv = investments.get('WIN', [0])[0] if investments.get('WIN') else 0
+                horses = list(range(1, len(win_odds) + 1))
+                ucb_state = st.session_state.ucb_state
+                ucb_state['t'] += 1
+
+                df_ucb, top4 = run_ucb_prediction(win_odds, total_win_inv, horses, ucb_state, ucb_state['t'])
+
+                # 開賽前 1 分鐘鎖定
+                if (post_time - time_now).total_seconds() <= 60 and not ucb_state['locked']:
+                    ucb_state['locked'] = True
+                    ucb_state['final_ucb_df'] = df_ucb
+
+                with ucb_placeholder.container():
+                    st.subheader("UCB 即時預測（每次選 Top 4）")
+                    if ucb_state['locked']:
+                        st.success("最終預測鎖定！")
+                        styled = df_ucb.style.apply(lambda row: ['background-color: lightgreen' if 'Top 1' in row['排名'] else
+                                                              'background-color: lightyellow' if 'Top 2' in row['排名'] else
+                                                              'background-color: lightsalmon' if 'Top 3' in row['排名'] else
+                                                              'background-color: lightblue' if 'Top 4' in row['排名'] else '' for _ in row], axis=1)
+                        st.dataframe(styled, use_container_width=True)
+                        st.info(f"**最終 Top 4**：{', '.join([f'馬 {h}' for h in top4])}")
+                    else:
+                        st.dataframe(df_ucb.head(8), use_container_width=True)
+
             time.sleep(15)
+            st.rerun()
