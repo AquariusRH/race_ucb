@@ -1032,8 +1032,8 @@ if st.session_state.get('reset', False):
         'diff_dict': {m: pd.DataFrame() for m in methodlist + ['overall']},
         'ucb_state': {
             't': 0,
-            'selected_count': {i+1: 0 for i in range(len(race_dict[race_no]['no']))},
-            'momentum_hist': {i+1: [] for i in range(len(race_dict[race_no]['no']))},
+            'selected_count': {i+1: 0 for i in range(len(race_dict[race_no]['馬名']))},
+            'momentum_hist': {i+1: [] for i in range(len(race_dict[race_no]['馬名']))},
             'final_ucb_df': None,
             'locked': False
         }
