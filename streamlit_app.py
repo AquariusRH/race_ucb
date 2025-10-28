@@ -27,7 +27,7 @@ def get_race_basic_data(Date, place):
         'Content-Type': 'application/json',
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
     }
-      payload = {
+    payload = {
       "operationName": "raceMeetings",
       "variables": {"date": str(Date), "venueCode": place},
       "query": """
