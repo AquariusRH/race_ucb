@@ -4,255 +4,19 @@ import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
 import pytz
+import time
+import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.font_manager.fontManager.addfont('TaipeiSansTCBeta-Regular.ttf')
+matplotlib.rc('font', family='Taipei Sans TC Beta')
+from warnings import simplefilter
+simplefilter(action="ignore", category=pd.errors.PerformanceWarning)
+# Show the page title and description.
+st.set_page_config(page_title="Jockey Race")
+st.title("Jockey Race 賽馬程式")
 
-# ==================== 你的三欄輸入 ====================
-st.set_page_config(page_title="UCB 最終預測表格", layout="wide")
-st.title("UCB 最終預測表格（直至開跑）")
-
-infoColumns = st.columns(3)
-with infoColumns[0]:
-    Date = st.date_input('日期:', value=datetime.now())
-with infoColumns[1]:
-    options = ['ST', 'HV', 'S1', 'S2', 'S3', 'S4', 'S5']
-    place = st.selectbox('場地:', options)
-with infoColumns[2]:
-    race_options = np.arange(1, 12)
-    race_no = st.selectbox('場次:', race_options)
-
-# ==================== 抓基本資料 API ====================
-@st.cache_data(ttl=3600)
-def get_race_basic_data(Date, place):
-    url = 'https://info.cld.hkjc.com/graphql/base/'
-    headers = {
-        'Content-Type': 'application/json',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-    }
-    payload = {
-      "operationName": "raceMeetings",
-      "variables": {"date": str(Date), "venueCode": place},
-      "query": """
-      fragment raceFragment on Race {
-        id
-        no
-        status
-        raceName_en
-        raceName_ch
-        postTime
-        country_en
-        country_ch
-        distance
-        wageringFieldSize
-        go_en
-        go_ch
-        ratingType
-        raceTrack {
-          description_en
-          description_ch
-        }
-        raceCourse {
-          description_en
-          description_ch
-          displayCode
-        }
-        claCode
-        raceClass_en
-        raceClass_ch
-        judgeSigns {
-          value_en
-        }
-      }
-  
-      fragment racingBlockFragment on RaceMeeting {
-        jpEsts: pmPools(
-          oddsTypes: [TCE, TRI, FF, QTT, DT, TT, SixUP]
-          filters: ["jackpot", "estimatedDividend"]
-        ) {
-          leg {
-            number
-            races
-          }
-          oddsType
-          jackpot
-          estimatedDividend
-          mergedPoolId
-        }
-        poolInvs: pmPools(
-          oddsTypes: [WIN, PLA, QIN, QPL, CWA, CWB, CWC, IWN, FCT, TCE, TRI, FF, QTT, DBL, TBL, DT, TT, SixUP]
-        ) {
-          id
-          leg {
-            races
-          }
-        }
-        penetrometerReadings(filters: ["first"]) {
-          reading
-          readingTime
-        }
-        hammerReadings(filters: ["first"]) {
-          reading
-          readingTime
-        }
-        changeHistories(filters: ["top3"]) {
-          type
-          time
-          raceNo
-          runnerNo
-          horseName_ch
-          horseName_en
-          jockeyName_ch
-          jockeyName_en
-          scratchHorseName_ch
-          scratchHorseName_en
-          handicapWeight
-          scrResvIndicator
-        }
-      }
-  
-      query raceMeetings($date: String, $venueCode: String) {
-        timeOffset {
-          rc
-        }
-        activeMeetings: raceMeetings {
-          id
-          venueCode
-          date
-          status
-          races {
-            no
-            postTime
-            status
-            wageringFieldSize
-          }
-        }
-        raceMeetings(date: $date, venueCode: $venueCode) {
-          id
-          status
-          venueCode
-          date
-          totalNumberOfRace
-          currentNumberOfRace
-          dateOfWeek
-          meetingType
-          totalInvestment
-          country {
-            code
-            namech
-            nameen
-            seq
-          }
-          races {
-            ...raceFragment
-            runners {
-              id
-              no
-              standbyNo
-              status
-              name_ch
-              name_en
-              horse {
-                id
-                code
-              }
-              color
-              barrierDrawNumber
-              handicapWeight
-              currentWeight
-              currentRating
-              internationalRating
-              gearInfo
-              racingColorFileName
-              allowance
-              trainerPreference
-              last6run
-              saddleClothNo
-              trumpCard
-              priority
-              finalPosition
-              deadHeat
-              winOdds
-              jockey {
-                code
-                name_en
-                name_ch
-              }
-              trainer {
-                code
-                name_en
-                name_ch
-              }
-            }
-          }
-          obSt: pmPools(oddsTypes: [WIN, PLA]) {
-            leg {
-              races
-            }
-            oddsType
-            comingleStatus
-          }
-          poolInvs: pmPools(
-            oddsTypes: [WIN, PLA, QIN, QPL, CWA, CWB, CWC, IWN, FCT, TCE, TRI, FF, QTT, DBL, TBL, DT, TT, SixUP]
-          ) {
-            id
-            leg {
-              number
-              races
-            }
-            status
-            sellStatus
-            oddsType
-            investment
-            mergedPoolId
-            lastUpdateTime
-          }
-          ...racingBlockFragment
-          pmPools(oddsTypes: []) {
-            id
-          }
-          jkcInstNo: foPools(oddsTypes: [JKC], filters: ["top"]) {
-            instNo
-          }
-          tncInstNo: foPools(oddsTypes: [TNC], filters: ["top"]) {
-            instNo
-          }
-        }
-      }
-      """
-  }
-    try:
-        r = requests.post(url, headers=headers, json=payload, timeout=15)
-        if r.status_code != 200:
-            return None, None, f"API 錯誤：{r.status_code}"
-        data = r.json().get('data', {}).get('raceMeetings', [])
-        if not data:
-            return None, None, "無賽事資料"
-
-        race_dict = {}
-        post_time_dict = {}
-        for meeting in data:
-            for race in meeting.get('races', []):
-                rno = race['no']
-                post_time_str = race.get('postTime')
-                if not post_time_str: continue
-                post_time_utc = datetime.fromisoformat(post_time_str.replace('Z', '+00:00'))
-                post_time_hkt = post_time_utc.astimezone(pytz.timezone('Asia/Hong_Kong'))
-                post_time_dict[rno] = post_time_hkt
-
-                race_dict[rno] = {
-                    "馬號": [], "馬名": [], "騎師": [], "練馬師": [], "最近賽績": []
-                }
-                for runner in race.get('runners', []):
-                    if runner.get('standbyNo'): continue
-                    no = runner.get('no', '-')
-                    race_dict[rno]["馬號"].append(no)
-                    race_dict[rno]["馬名"].append(runner.get('name_ch', '未知'))
-                    race_dict[rno]["騎師"].append(runner.get('jockey', {}).get('name_ch', '未知'))
-                    race_dict[rno]["練馬師"].append(runner.get('trainer', {}).get('name_ch', '未知'))
-                    race_dict[rno]["最近賽績"].append(runner.get('last6run', '-'))
-        return race_dict, post_time_dict, "成功"
-    except Exception as e:
-        return None, None, f"例外錯誤：{e}"
-
-# ==================== 抓即時賠率 & 投注額（你的函數）====================
+# @title 2. {func} 下載數據
+# @title 處理數據
 def get_investment_data():
   url = 'https://info.cld.hkjc.com/graphql/base/'
   headers = {'Content-Type': 'application/json'}
@@ -532,150 +296,723 @@ def get_overall_investment(time_now,dict):
         total_investment_df[horse] = total_investment
     overall_investment_dict['overall'] = overall_investment_dict['overall']._append(total_investment_df)
 
-# ==================== 載入資料 ====================
-with st.spinner("正在載入賽事資料..."):
-    race_dict, post_time_dict, status_msg = get_race_basic_data(Date, place)
+def print_bar_chart(time_now):
+  post_time = post_time_dict[race_no]
+  time_25_minutes_before = np.datetime64(post_time - timedelta(minutes=25) + timedelta(hours=8))
+  time_5_minutes_before = np.datetime64(post_time - timedelta(minutes=5) + timedelta(hours=8))
+  
+  for method in print_list:
+      odds_list = pd.DataFrame()
+      df = pd.DataFrame()
+      if method == 'overall':
+          df = overall_investment_dict[method]
+          change_data = diff_dict[method].iloc[-1]
+      elif method in methodlist:
+          df = overall_investment_dict[method]
+          change_data = diff_dict[method].tail(10).sum(axis = 0)
+          odds_list = odds_dict[method]
+      if df.empty:
+        continue
+      fig, ax1 = plt.subplots(figsize=(12, 6))
+      df.index = pd.to_datetime(df.index)
+      df_1st = pd.DataFrame()
+      df_1st_2nd = pd.DataFrame()
+      df_2nd = pd.DataFrame()
+      #df_3rd = pd.DataFrame()
+      df_1st = df[df.index< time_25_minutes_before].tail(1)
+      df_1st_2nd = df[df.index >= time_25_minutes_before].head(1)
+      df_2nd = df[df.index >= time_25_minutes_before].tail(1)
+      df_3rd = df[df.index>= time_5_minutes_before].tail(1)
 
-if race_dict is None:
-    st.error(f"無法取得賽事資料：{status_msg}")
-    st.info("建議：\n- 日期：2025/10/26\n- 場地：ST\n- 場次：1")
-    st.stop()
+      change_df = pd.DataFrame([change_data.apply(lambda x: x*6 if x > 0 else x*3)],columns=change_data.index,index =[df.index[-1]])
+      print(change_df)
+      if method in ['WIN', 'PLA']:
+        odds_list.index = pd.to_datetime(odds_list.index)
+        odds_1st = odds_list[odds_list.index< time_25_minutes_before].tail(1)
+        odds_2nd = odds_list[odds_list.index >= time_25_minutes_before].tail(1)
+        #odds_3rd = odds_list[odds_list.index>= time_5_minutes_before].tail(1)
 
-if race_no not in race_dict:
-    st.error(f"第 {race_no} 場不存在！當天最多 {max(race_dict.keys())} 場")
-    st.stop()
+      bars_1st = None
+      bars_2nd = None
+      #bars_3rd = None
+      # Initialize data_df
+      if not df_1st.empty:
+          data_df = df_1st
+          data_df = data_df._append(df_2nd)
+      elif not df_1st_2nd.empty:
+          data_df = df_1st_2nd
+          if not df_2nd.empty and not df_2nd.equals(df_1st_2nd):  # Avoid appending identical df_2nd
+              data_df = data_df._append(df_2nd)
+      else:
+          data_df = pd.DataFrame()  # Fallback if both are empty
+      #final_data_df = data_df._append(df_3rd)
+      final_data_df = data_df
+      sorted_final_data_df = final_data_df.sort_values(by=final_data_df.index[0], axis=1, ascending=False)
+      diff = sorted_final_data_df.diff().dropna()
+      diff[diff < 0] = 0
+      X = sorted_final_data_df.columns
+      X_axis = np.arange(len(X))
+      sorted_change_df = change_df[X]
+      if df_3rd.empty:
+                  bar_colour = 'blue'
+      else:
+                  bar_colour = 'red'
+      if not df_1st.empty:
+          if df_2nd.empty:
+                bars_1st = ax1.bar(X_axis, sorted_final_data_df.iloc[0], 0.4, label='投注額', color='pink')
+          else:
+                bars_2nd = ax1.bar(X_axis - 0.2, sorted_final_data_df.iloc[1], 0.4, label='25分鐘', color=bar_colour)
+                bar = ax1.bar(X_axis+0.2,sorted_change_df.iloc[0],0.4,label='改變',color='grey')
+                #if not df_3rd.empty:
+                    #bars_3rd = ax1.bar(X_axis, diff.iloc[0], 0.3, label='5分鐘', color='red')
+      else:
+            if df_2nd.equals(df_1st_2nd):
+              bars_2nd = ax1.bar(X_axis - 0.2, sorted_final_data_df.iloc[0], 0.4, label='25分鐘', color=bar_colour)
+            else:
+                bars_2nd = ax1.bar(X_axis - 0.2, sorted_final_data_df.iloc[1], 0.4, label='25分鐘', color=bar_colour)
+                bar = ax1.bar(X_axis+0.2,sorted_change_df.iloc[0],0.4,label='改變',color='grey')
+                #if not df_3rd.empty:
+                    #bars_3rd = ax1.bar(X_axis, diff.iloc[0], 0.3, label='5分鐘', color='red')
+            #else:
+                #bars_3rd = ax1.bar(X_axis-0.2, sorted_final_data_df.iloc[0], 0.4, label='5分鐘', color='red')
+                #bar = ax1.bar(X_axis+0.2,sorted_change_df.iloc[0],0.4,label='改變',color='grey')
 
-# 開賽時間
-post_time = post_time_dict.get(race_no)
-if not post_time:
-    st.error("無開賽時間")
-    st.stop()
+      # Add numbers above bars
+      if method in ['WIN', 'PLA']:
+        if bars_2nd is not None:
+          sorted_odds_list_2nd = odds_2nd[X].iloc[0]
+          for bar, odds in zip(bars_2nd, sorted_odds_list_2nd):
+              yval = bar.get_height()
+              ax1.text(bar.get_x() + bar.get_width() / 2, yval, odds, ha='center', va='bottom')
+        #if bars_3rd is not None:
+          #sorted_odds_list_3rd = odds_3rd[X].iloc[0]
+          #for bar, odds in zip(bars_3rd, sorted_odds_list_3rd):
+               # yval = bar.get_height()
+                #ax1.text(bar.get_x() + bar.get_width() / 2, yval, odds, ha='center', va='bottom')
+        elif bars_1st is not None:
+          sorted_odds_list_1st = odds_1st[X].iloc[0]
+          for bar, odds in zip(bars_1st, sorted_odds_list_1st):
+              yval = bar.get_height()
+              ax1.text(bar.get_x() + bar.get_width() / 2, yval, odds, ha='center', va='bottom')
 
-st.success(f"第 {race_no} 場資料載入成功！開賽時間：{post_time.strftime('%H:%M:%S')}")
+      namelist_sort = [numbered_dict[race_no][i - 1] for i in X]
+      formatted_namelist = [label.split('.')[0] + '.' + '\n'.join(label.split('.')[1]) for label in namelist_sort]
+      plt.xticks(X_axis, formatted_namelist, fontsize=12)
+      ax1.grid(color='lightgrey', axis='y', linestyle='--')
+      ax1.set_ylabel('投注額',fontsize=15)
+      ax1.tick_params(axis='y')
+      fig.legend()
 
-# ==================== UCB 狀態 ====================
-if 'ucb' not in st.session_state:
-    n_horses = len(race_dict[race_no]['馬號'])
-    st.session_state.ucb = {
-        't': 0,
-        'selected_count': {i+1: 0 for i in range(n_horses)},
-        'momentum_hist': {i+1: [] for i in range(n_horses)},
-        'final_df': None,
-        'locked': False,
-        'start_time': None
-    }
+      if method == 'overall':
+          plt.title('綜合', fontsize=15)
+      elif method == 'QIN':
+          plt.title('連贏', fontsize=15)
+      elif method == 'QPL':
+          plt.title('位置Q', fontsize=15)
+      elif method == 'WIN':
+          plt.title('獨贏', fontsize=15)
+      elif method == 'PLA':
+          plt.title('位置', fontsize=15)
+      st.pyplot(fig)
 
-state = st.session_state.ucb
+def weird_data(investments):
 
-# ==================== 開始監測 ====================
-if st.button("開始 UCB 監測", type="primary"):
-    state.update({
-        't': 0, 'locked': False, 'final_df': None,
-        'start_time': datetime.now(pytz.timezone('Asia/Hong_Kong'))
-    })
-    st.rerun()
+  for method in methodlist:
+    if investment_dict[method].empty:
+      continue
+    latest_investment = investment_dict[method].tail(1).values
+    last_time_odds = odds_dict[method].tail(2).head(1)
+    expected_investment = investments[method][0] / 1000 / last_time_odds
+    diff = round(latest_investment - expected_investment,0)
+    if method in ['WIN','PLA']:
+        diff_dict[method] = diff_dict[method]._append(diff)
+    elif method in ['QIN','QPL']:
+        diff_dict[method] = diff_dict[method]._append(investment_combined(time_now,method,diff))
+    #benchmark = benchmark_dict.get(method)
+    #diff.index = diff.index.strftime('%H:%M:%S')
+    #for index in investment_dict[method].tail(1).columns:
+      #error = diff[index].values[0]
+      #error_df = []
+      #if error > benchmark:
+        #if error < benchmark * 2 :
+         # highlight = '-'
+        #elif error < benchmark * 3 :
+        #  highlight = '*'
+       # elif error < benchmark * 4 :
+        #  highlight = '**'
+        #else:
+        #  highlight = '***'
+        #error_df = pd.DataFrame([[index,error,odds_dict[method].tail(1)[index].values,highlight]], columns=['No.', 'error','odds', 'Highlight'],index = diff.index)
+      #weird_dict[method] = weird_dict[method]._append(error_df)
 
-if not state['start_time']:
-    st.stop()
+def change_overall(time_now):
+  total_investment = 0
+  for method in methodlist:
+    total_investment += diff_dict[method].sum(axis=0)
+  total_investment_df = pd.DataFrame([total_investment],index = [time_now])
+  diff_dict['overall'] = diff_dict['overall']._append(total_investment_df)
 
-# ==================== 倒數 & 鎖定 ====================
-now_hkt = datetime.now(pytz.timezone('Asia/Hong_Kong'))
-time_left = post_time - now_hkt
-mins, secs = divmod(max(int(time_left.total_seconds()), 0), 60)
-st.metric("距離開賽", f"{mins:02d}:{secs:02d}")
+def print_concern_weird_dict():
+    target_list = methodlist[0:4]
+    if 'QPL' not in target_list:
+      target_list = methodlist[0:3]
+    for method in target_list:
+      name = methodCHlist[methodlist.index(method)]
+      st.write(f'{name} 異常投注')
+      df = weird_dict[method]
+      df_tail = df.tail(20)[::-1]
+      count = df.value_counts('No.')
+      count_df = count.to_frame().T
 
-if time_left.total_seconds() <= 60 and not state['locked']:
-    state['locked'] = True
-    st.success("開賽前 1 分鐘：最終預測鎖定！")
+      # Create two columns
+      col1, col2 = st.columns(2)
 
-# ==================== 主循環：每 30 秒更新 ====================
-update_trigger = st.button("手動更新") or (state['t'] > 0 and (now_hkt - state['start_time']).seconds >= state['t'] * 30)
+      # Display df_tail in the first column
+      with col1:
+         df_tail
 
-if update_trigger and not state['locked']:
-    state['t'] += 1
-    t = state['t']
+      # Display count_df in the second column
+      with col2:
+          count_df
+# Define a function to apply conditional formatting
+def highlight_change(val):
+    color = 'limegreen' if '+' in val else 'crimson' if '-' in val else ''
+    return f'color: {color}'
 
-    # 抓即時資料
-    odds_list = get_odds_data(Date, place, race_no)
-    total_inv = get_investment_data(Date, place, race_no)
-    win_odds = np.array([o if o < 999 else 999 for o in odds_list[:len(race_dict[race_no]['馬號'])]])
-    n_horses = len(win_odds)
-    horses = list(range(1, n_horses + 1))
+def top(method_odds_df, method_investment_df, method):
+    # Extract the first row from odds DataFrame
+    first_row_odds = method_odds_df.iloc[0]
+    first_row_odds_df = first_row_odds.to_frame(name='Odds').reset_index()
+    first_row_odds_df.columns = ['Combination', 'Odds']
 
-    # 隱含投注量
-    inv_per_horse = total_inv / win_odds if total_inv > 0 else np.zeros(n_horses)
-    inv_mean = np.mean(inv_per_horse[inv_per_horse > 0]) if np.any(inv_per_horse > 0) else 1
+    # Extract the last row from odds DataFrame
+    last_row_odds = method_odds_df.iloc[-1]
+    last_row_odds_df = last_row_odds.to_frame(name='Odds').reset_index()
+    last_row_odds_df.columns = ['Combination', 'Odds']
+    third_last_row_index = max(-len(method_odds_df), -11)
+    third_last_row_odds = method_odds_df.iloc[third_last_row_index]
+    third_last_row_odds_df = third_last_row_odds.to_frame(name='Odds').reset_index()
+    third_last_row_odds_df.columns = ['Combination', 'Odds']
+    # Extract the second last row from odds DataFrame (or the closest available row)
+    second_last_row_index = max(-len(method_odds_df), -3)
+    second_last_row_odds = method_odds_df.iloc[second_last_row_index]
+    second_last_row_odds_df = second_last_row_odds.to_frame(name='Odds').reset_index()
+    second_last_row_odds_df.columns = ['Combination', 'Odds']
 
-    # 正規化動量
-    momentum = {}
-    for h in horses:
-        idx = h - 1
-        state['momentum_hist'][h].append(inv_per_horse[idx])
-        hist = state['momentum_hist'][h]
-        raw_mom = hist[-1] - hist[-2] if len(hist) >= 2 else 0
-        momentum[h] = raw_mom / (inv_mean + 1e-6)
+    # Calculate the initial rank and initial odds
+    first_row_odds_df['Initial_Rank'] = first_row_odds_df['Odds'].rank(method='min').astype(int)
+    first_row_odds_df['Initial_Odds'] = first_row_odds_df['Odds']
 
-    # UCB 計算（防熱門）
-    ucb_values = {}
-    for h in horses:
-        n = max(state['selected_count'][h], 1)
-        exploration = 2.0 * np.sqrt(np.log(t) / n)
-        value_bonus = 1.0 / (win_odds[h-1] ** 0.5)
-        avg_sel = np.mean(list(state['selected_count'].values()))
-        penalty = -0.3 * (state['selected_count'][h] - avg_sel) ** 2
-        ucb_values[h] = momentum[h] * 2.0 + exploration + value_bonus + penalty
+    # Calculate the current rank and current odds
+    last_row_odds_df['Current_Rank'] = last_row_odds_df['Odds'].rank(method='min').astype(int)
+    last_row_odds_df['Initial_Rank'] = first_row_odds_df['Initial_Rank'].values
+    last_row_odds_df['Initial_Odds'] = first_row_odds_df['Initial_Odds'].values
 
-    # 選 Top 4
-    topk = sorted(ucb_values, key=ucb_values.get, reverse=True)[:4]
-    for h in topk:
-        state['selected_count'][h] += 1
+    # Calculate the previous rank using the second last row
+    second_last_row_odds_df['Previous_Rank'] = second_last_row_odds_df['Odds'].rank(method='min').astype(int)
+    last_row_odds_df['Previous_Rank'] = second_last_row_odds_df['Previous_Rank'].values
 
-    # 建表格
-    table_data = []
-    for i, h in enumerate(race_dict[race_no]['馬號']):
-        horse_no = int(h)
-        table_data.append({
-            '馬號': horse_no,
-            '馬名': race_dict[race_no]['馬名'][i],
-            '騎師': race_dict[race_no]['騎師'][i],
-            '練馬師': race_dict[race_no]['練馬師'][i],
-            '最近賽績': race_dict[race_no]['最近賽績'][i],
-            '賠率': f"{win_odds[i]:.2f}",
-            '動量': f"{momentum.get(horse_no, 0):+.3f}",
-            '被選次數': state['selected_count'][horse_no],
-            'UCB': f"{ucb_values.get(horse_no, 0):.3f}",
-            '排名': f"Top {topk.index(horse_no)+1}" if horse_no in topk else ""
-        })
-    df = pd.DataFrame(table_data).sort_values('UCB', ascending=False)
-    state['final_df'] = df
-    st.rerun()
+    # Calculate the change of rank
+    last_row_odds_df['Change_of_Rank'] = last_row_odds_df['Initial_Rank'] - last_row_odds_df['Current_Rank']
+    last_row_odds_df['Change_of_Rank'] = last_row_odds_df['Change_of_Rank'].apply(lambda x: f'+{x}' if x > 0 else (str(x) if x < 0 else '0'))
 
-# ==================== 顯示最終表格 ====================
-if state['final_df'] is not None:
-    df = state['final_df']
+    # Combine the initial rank and change of rank into the same column format like 10 (+1)
+    last_row_odds_df['Initial_Rank'] = last_row_odds_df.apply(lambda row: f"{row['Initial_Rank']}" f"({row['Change_of_Rank']})", axis=1)
 
-    def highlight(row):
-        if row['排名'].startswith('Top'):
-            rank = int(row['排名'].split()[1])
-            colors = ["#90EE90", "#FFFFE0", "#FFB6C1", "#87CEEB"]
-            return [f'background-color: {colors[rank-1]}'] * len(row)
-        return [''] * len(row)
+    # Calculate the difference between the current rank and previous rank and add this difference to the previous rank in the format 10 (+1)
+    last_row_odds_df['Change_of_Previous_Rank'] = last_row_odds_df['Previous_Rank'] - last_row_odds_df['Current_Rank']
+    last_row_odds_df['Change_of_Previous_Rank'] = last_row_odds_df['Change_of_Previous_Rank'].apply(lambda x: f'+{x}' if x > 0 else (str(x) if x < 0 else '0'))
+    last_row_odds_df['Previous_Rank'] = last_row_odds_df.apply(lambda row: f"{row['Previous_Rank']}" f"({row['Change_of_Previous_Rank']})", axis=1)
 
-    styled = df.style.apply(highlight, axis=1).format({
-        '賠率': '{:.2f}', '動量': '{:+.3f}', 'UCB': '{:.3f}'
-    })
+    # Rearrange the columns as requested
+    final_df = last_row_odds_df[['Combination', 'Odds', 'Initial_Odds', 'Current_Rank', 'Initial_Rank', 'Previous_Rank']]
 
-    if state['locked']:
-        st.success("**最終預測表格（已鎖定）**")
+    # Format the odds to one decimal place using .loc to avoid SettingWithCopyWarning
+    final_df.loc[:, 'Odds'] = final_df['Odds'].round(1)
+    final_df.loc[:, 'Initial_Odds'] = final_df['Initial_Odds'].round(1)
+
+    # Extract the first row from investment DataFrame
+    first_row_investment = method_investment_df.iloc[0]
+    first_row_investment_df = first_row_investment.to_frame(name='Investment').reset_index()
+    first_row_investment_df.columns = ['Combination', 'Investment']
+
+    # Extract the last row from investment DataFrame
+    last_row_investment = method_investment_df.iloc[-1]
+    last_row_investment_df = last_row_investment.to_frame(name='Investment').reset_index()
+    last_row_investment_df.columns = ['Combination', 'Investment']
+
+    # Extract the second last row from investment DataFrame (or the closest available row)
+    second_last_row_index = max(-len(method_investment_df), -3)
+    second_last_row_investment = method_investment_df.iloc[second_last_row_index]
+    second_last_row_investment_df = second_last_row_investment.to_frame(name='Investment').reset_index()
+    second_last_row_investment_df.columns = ['Combination', 'Investment']
+    third_last_row_index = max(-len(method_investment_df), -7)
+    third_last_row_investment = method_investment_df.iloc[third_last_row_index]
+    third_last_row_investment_df = third_last_row_investment.to_frame(name='Investment').reset_index()
+    third_last_row_investment_df.columns = ['Combination', 'Investment']
+    # Calculate the difference in investment before sorting
+    last_row_investment_df['Investment_Change'] = last_row_investment_df['Investment'] - first_row_investment_df['Investment'].values
+    last_row_investment_df['Investment_Change'] = last_row_investment_df['Investment_Change'].apply(lambda x: x if x > 0 else 0)
+    second_last_row_investment_df['Previous_Investment_Change'] = last_row_investment_df['Investment'] - second_last_row_investment_df['Investment'].values
+    second_last_row_investment_df['Previous_Investment_Change'] = second_last_row_investment_df['Previous_Investment_Change'].apply(lambda x: x if x > 0 else 0)
+    third_last_row_investment_df['Previous_Investment_Change'] = last_row_investment_df['Investment'] - third_last_row_investment_df['Investment'].values
+    third_last_row_investment_df['Previous_Investment_Change'] = third_last_row_investment_df['Previous_Investment_Change'].apply(lambda x: x if x > 0 else 0)
+
+    # Sort the final DataFrame by odds value
+    final_df = final_df.sort_values(by='Odds')
+
+    # Combine the investment data with the final DataFrame based on the combination
+    final_df = final_df.merge(last_row_investment_df[['Combination', 'Investment_Change', 'Investment']], on='Combination', how='left')
+    final_df = final_df.merge(second_last_row_investment_df[['Combination', 'Previous_Investment_Change']], on='Combination', how='left')
+    final_df = final_df.merge(third_last_row_investment_df[['Combination', 'Previous_Investment_Change']], on='Combination', how='left')
+
+    if method in ['WIN','PLA']:
+      final_df.columns = ['馬匹', '賠率', '最初賠率', '排名', '最初排名', '上一次排名', '投注變化', '投注', '一分鐘投注','三分鐘投注']
+      target_df = final_df
+      rows_with_plus = target_df[
+          target_df['最初排名'].astype(str).str.contains('\+') |
+          target_df['上一次排名'].astype(str).str.contains('\+')
+      ][['馬匹', '賠率', '最初排名', '上一次排名']]
+      # Apply the conditional formatting to the 初始排名 and 前一排名 columns and add a bar to the 投資變化 column
+      styled_df = final_df.style.format({
+        '賠率': '{:.1f}',
+        '最初賠率': '{:.1f}',
+        '投注變化': '{:.2f}k',
+        '投注': '{:.2f}k',
+        '一分鐘投注': '{:.2f}k',
+        '三分鐘投注': '{:.2f}k'
+      }).map(highlight_change, subset=['最初排名', '上一次排名']).bar(subset=['投注變化', '一分鐘投注','三分鐘投注'], color='rgba(173, 216, 230, 0.5)').hide(axis='index')
+      styled_rows_with_plus = rows_with_plus.style.format({'賠率': '{:.1f}'}).map(highlight_change, subset=['最初排名', '上一次排名']).hide(axis='index')
+      # Display the styled DataFrame
+      st.write(styled_df.to_html(), unsafe_allow_html=True)
+      st.write(styled_rows_with_plus.to_html(), unsafe_allow_html=True)
+
+
     else:
-        st.info(f"即時 UCB 表格（第 {state['t']} 次更新）")
+      final_df.columns = ['組合', '賠率', '最初賠率', '排名', '最初排名', '上一次排名', '投注變化', '投注', '一分鐘投注','三分鐘投注']
+      target_df = final_df.head(15)
+      target_special_df = final_df.head(30)
+      rows_with_plus = target_special_df[
+          target_special_df['最初排名'].astype(str).str.contains('\+') |
+          target_special_df['上一次排名'].astype(str).str.contains('\+')
+      ][['組合', '賠率', '最初排名', '上一次排名']]
+    
 
-    st.dataframe(styled, use_container_width=True)
+      # Apply the conditional formatting to the 初始排名 and 前一排名 columns and add a bar to the 投資變化 column
+      styled_df = target_df.style.format({
+        '賠率': '{:.1f}',
+        '最初賠率': '{:.1f}',
+        '投注變化': '{:.2f}k',
+        '投注': '{:.2f}k',
+        '一分鐘投注': '{:.2f}k',
+        '三分鐘投注': '{:.2f}k'
+      }).map(highlight_change, subset=['最初排名', '上一次排名']).bar(subset=['投注變化', '一分鐘投注','三分鐘投注'], color='rgba(173, 216, 230, 0.5)').hide(axis='index')
+      styled_rows_with_plus = rows_with_plus.style.format({'賠率': '{:.1f}'}).map(highlight_change, subset=['最初排名', '上一次排名']).hide(axis='index')
+      # Display the styled DataFrame
+      st.write(styled_df.to_html(), unsafe_allow_html=True)
 
-    top4 = df.head(4)['馬號'].tolist()
-    st.info(f"**建議投注**：PLA {top4}｜QIN(前二)｜TRI(前三)")
+      if method in ["QIN","QPL","FCT","TRI","FF"]:
+        if method in ["QIN"]:
+          notice_df = final_df[(final_df['一分鐘投注'] >= 100) | (final_df['三分鐘投注'] >= 300)][['組合', '賠率', '一分鐘投注', '三分鐘投注']]
+        elif method in ["QPL"]:
+          notice_df = final_df[(final_df['一分鐘投注'] >= 200) | (final_df['三分鐘投注'] >= 600)][['組合', '賠率', '一分鐘投注', '三分鐘投注']]
+        elif method in ["FCT"]:
+          notice_df = final_df[(final_df['一分鐘投注'] >= 10) | (final_df['三分鐘投注'] >= 30)][['組合', '賠率', '一分鐘投注', '三分鐘投注']]
+        else:
+          notice_df = final_df[(final_df['一分鐘投注'] >= 5) | (final_df['三分鐘投注'] >= 15)][['組合', '賠率', '一分鐘投注', '三分鐘投注']]
+        styled_notice_df = notice_df.style.format({'賠率': '{:.1f}','一分鐘投注': '{:.2f}k','三分鐘投注': '{:.2f}k'}).bar(subset=['一分鐘投注','三分鐘投注'], color='rgba(173, 216, 230, 0.5)').hide(axis='index')
+        
 
-# ==================== 開賽提醒 ====================
-if time_left.total_seconds() <= 0:
-    st.balloons()
-    st.success("比賽已開始！")
+      col1, col2 = st.columns(2)
+      with col1:
+        st.write(styled_rows_with_plus.to_html(), unsafe_allow_html=True)
+      with col2:
+        st.write(styled_notice_df.to_html(), unsafe_allow_html=True)
+
+def print_top():
+  for method in top_list:
+        if odds[method]:
+          methodCHlist[methodlist.index(method)]
+          top(odds_dict[method], investment_dict[method], method)
+
+def print_highlight():
+  for method in ['WIN','QIN']:
+    df = weird_dict[method]
+    if not df.empty:
+      filtered_df_3 = df[df['Highlight'] == '***']
+      filtered_df_2 = df[df['Highlight'] == '**']
+      filtered_df_1 = df[df['Highlight'] == '*']
+      if method == 'WIN':
+        st.write('獨贏')
+      elif method == 'QIN':
+        st.write('連贏')
+      highlightColumns = st.columns(3)
+      if not filtered_df_3.empty:
+        with highlightColumns[0]:
+          crosstab_3 = pd.crosstab(filtered_df_3['No.'],filtered_df_3['Highlight']).sort_values(by='***', ascending=False)
+          crosstab_3
+      if not filtered_df_2.empty:  
+        with highlightColumns[1]:
+          crosstab_2 = pd.crosstab(filtered_df_2['No.'],filtered_df_2['Highlight']).sort_values(by='**', ascending=False)
+          crosstab_2
+      if not filtered_df_1.empty:  
+        with highlightColumns[2]:
+          crosstab_1 = pd.crosstab(filtered_df_1['No.'],filtered_df_1['Highlight']).sort_values(by='*', ascending=False)
+          crosstab_1
+
+
+
+def main(time_now,odds,investments,period):
+  save_odds_data(time_now,odds)
+  save_investment_data(time_now,investments,odds)
+  get_overall_investment(time_now,investments)
+  weird_data(investments)
+  change_overall(time_now)
+  print_bar_chart(time_now)
+  print_top()
+
+# Display the date picker widget
+infoColumns = st.columns(3)
+with infoColumns[0]:
+    Date = st.date_input('日期:', value=datetime.now())
+with infoColumns[1]:
+    options = ['ST', 'HV', 'S1', 'S2', 'S3', 'S4', 'S5']
+    place = st.selectbox('場地:', options)
+with infoColumns[2]:
+    race_options = np.arange(1, 12)
+    race_no = st.selectbox('場次:', race_options)
+
+# Initialize lists (using list2 and list2_ch as default; change to list1 and list1_ch if preferred)
+available_methods = ['WIN', 'PLA', 'QIN', 'QPL', 'FCT', 'TRI', 'FF']
+available_methods_ch = ['獨贏', '位置', '連贏', '位置Q', '二重彩', '單T', '四連環']
+print_list_default = ['WIN','PLA','QIN','QPL','FCT', 'TRI', 'FF']
+top_list_default = ['QIN','QPL','WIN','PLA','FCT', 'TRI', 'FF']
+default_checked_methods = ['WIN','QIN']
+# Initialize session state variables
+if 'reset' not in st.session_state:
+    st.session_state.reset = False
+if 'api_called' not in st.session_state:
+    st.session_state.api_called = False
+
+# Create individual checkboxes for each betting method
+st.write("選擇投注方式 (Select Betting Methods):")
+num_methods = len(available_methods)
+method_columns = st.columns(num_methods)  # Create one column per method
+selected_methods = []
+for idx, (method, method_ch) in enumerate(zip(available_methods, available_methods_ch)):
+  with method_columns[idx]:
+    is_default_checked = method in default_checked_methods
+    if st.checkbox(method_ch, value=is_default_checked, key=method):
+        selected_methods.append(method)
+# Update methodlist and methodCHlist based on selections
+methodlist = selected_methods
+
+methodCHlist = [available_methods_ch[available_methods.index(method)] for method in selected_methods]
+
+# Update print_list based on selections (only include selected methods that are in the default print_list)
+print_list = [item for item in print_list_default if item in selected_methods ]
+top_list = [item for item in top_list_default if item in selected_methods ]
+# Save changes to race_no (assuming race_no is defined elsewhere)
+race_no_value = race_no if 'race_no' in globals() else None
+
+# Example benchmark dictionary (assuming these variables are defined elsewhere)
+benchmark_dict = {
+    "WIN": benchmark_win if 'benchmark_win' in globals() else None,
+    "PLA": benchmark_pla if 'benchmark_pla' in globals() else None,
+    "QIN": benchmark_qin if 'benchmark_qin' in globals() else None,
+    "QPL": benchmark_qpl if 'benchmark_qpl' in globals() else None
+}
+
+# Define the button callback
+def click_start_button():
+    st.session_state.reset = True
+
+# Add a button to trigger an action
+if st.button("開始", on_click=click_start_button):
+    st.write(f"Selected methods: {methodlist}")
+    st.write(f"Chinese labels: {methodCHlist}")
+    st.write(f"Print list: {print_list}")
+
+# Display current state for debugging
+#st.write("Current methodlist:", methodlist)
+#st.write("Current methodCHlist:", methodCHlist)
+#st.write("Current print_list:", print_list)
+
+if not st.session_state.api_called:
+  url = 'https://info.cld.hkjc.com/graphql/base/'
+  headers = {'Content-Type': 'application/json'}
+  payload = {
+      "operationName": "raceMeetings",
+      "variables": {"date": str(Date), "venueCode": place},
+      "query": """
+      fragment raceFragment on Race {
+        id
+        no
+        status
+        raceName_en
+        raceName_ch
+        postTime
+        country_en
+        country_ch
+        distance
+        wageringFieldSize
+        go_en
+        go_ch
+        ratingType
+        raceTrack {
+          description_en
+          description_ch
+        }
+        raceCourse {
+          description_en
+          description_ch
+          displayCode
+        }
+        claCode
+        raceClass_en
+        raceClass_ch
+        judgeSigns {
+          value_en
+        }
+      }
+  
+      fragment racingBlockFragment on RaceMeeting {
+        jpEsts: pmPools(
+          oddsTypes: [TCE, TRI, FF, QTT, DT, TT, SixUP]
+          filters: ["jackpot", "estimatedDividend"]
+        ) {
+          leg {
+            number
+            races
+          }
+          oddsType
+          jackpot
+          estimatedDividend
+          mergedPoolId
+        }
+        poolInvs: pmPools(
+          oddsTypes: [WIN, PLA, QIN, QPL, CWA, CWB, CWC, IWN, FCT, TCE, TRI, FF, QTT, DBL, TBL, DT, TT, SixUP]
+        ) {
+          id
+          leg {
+            races
+          }
+        }
+        penetrometerReadings(filters: ["first"]) {
+          reading
+          readingTime
+        }
+        hammerReadings(filters: ["first"]) {
+          reading
+          readingTime
+        }
+        changeHistories(filters: ["top3"]) {
+          type
+          time
+          raceNo
+          runnerNo
+          horseName_ch
+          horseName_en
+          jockeyName_ch
+          jockeyName_en
+          scratchHorseName_ch
+          scratchHorseName_en
+          handicapWeight
+          scrResvIndicator
+        }
+      }
+  
+      query raceMeetings($date: String, $venueCode: String) {
+        timeOffset {
+          rc
+        }
+        activeMeetings: raceMeetings {
+          id
+          venueCode
+          date
+          status
+          races {
+            no
+            postTime
+            status
+            wageringFieldSize
+          }
+        }
+        raceMeetings(date: $date, venueCode: $venueCode) {
+          id
+          status
+          venueCode
+          date
+          totalNumberOfRace
+          currentNumberOfRace
+          dateOfWeek
+          meetingType
+          totalInvestment
+          country {
+            code
+            namech
+            nameen
+            seq
+          }
+          races {
+            ...raceFragment
+            runners {
+              id
+              no
+              standbyNo
+              status
+              name_ch
+              name_en
+              horse {
+                id
+                code
+              }
+              color
+              barrierDrawNumber
+              handicapWeight
+              currentWeight
+              currentRating
+              internationalRating
+              gearInfo
+              racingColorFileName
+              allowance
+              trainerPreference
+              last6run
+              saddleClothNo
+              trumpCard
+              priority
+              finalPosition
+              deadHeat
+              winOdds
+              jockey {
+                code
+                name_en
+                name_ch
+              }
+              trainer {
+                code
+                name_en
+                name_ch
+              }
+            }
+          }
+          obSt: pmPools(oddsTypes: [WIN, PLA]) {
+            leg {
+              races
+            }
+            oddsType
+            comingleStatus
+          }
+          poolInvs: pmPools(
+            oddsTypes: [WIN, PLA, QIN, QPL, CWA, CWB, CWC, IWN, FCT, TCE, TRI, FF, QTT, DBL, TBL, DT, TT, SixUP]
+          ) {
+            id
+            leg {
+              number
+              races
+            }
+            status
+            sellStatus
+            oddsType
+            investment
+            mergedPoolId
+            lastUpdateTime
+          }
+          ...racingBlockFragment
+          pmPools(oddsTypes: []) {
+            id
+          }
+          jkcInstNo: foPools(oddsTypes: [JKC], filters: ["top"]) {
+            instNo
+          }
+          tncInstNo: foPools(oddsTypes: [TNC], filters: ["top"]) {
+            instNo
+          }
+        }
+      }
+      """
+  }
+
+  # Make a POST request to the API
+  response = requests.post(url, json=payload)
+
+  # Check if the request was successful
+  if response.status_code == 200:
+      data = response.json()
+      # Extract the 'race_no' and 'name_ch' fields and save them into a dictionary
+      race_meetings = data.get('data', {}).get('raceMeetings', [])
+      race_dict = {}
+      post_time_dict = {}
+      for meeting in race_meetings:
+          for race in meeting.get('races', []):
+              id = race.get('runners', [])[0].get('id')
+              if id[8:10] != place:
+                    continue
+              race_number = race["no"]
+              post_time = race.get("postTime", "Field not found")
+              time_part = datetime.fromisoformat(post_time)
+              post_time_dict[race_number] = time_part
+              race_dict[race_number] = {"馬名": [], "騎師": [],'練馬師':[],'最近賽績':[]}
+              for runner in race.get('runners', []):
+                if runner.get('standbyNo') == "":
+                  name_ch = runner.get('name_ch', 'Field not found')
+                  jockey_name_ch = runner.get('jockey', {}).get('name_ch', 'Field not found')
+                  trainer_name_ch = runner.get('trainer', {}).get('name_ch', 'Field not found')
+                  last6run = runner.get('last6run', 'Field not found')
+                  race_dict[race_number]["馬名"].append(name_ch)
+                  race_dict[race_number]["騎師"].append(jockey_name_ch)
+                  race_dict[race_number]["練馬師"].append(trainer_name_ch)
+                  race_dict[race_number]["最近賽績"].append(last6run)
+      print('完成')
+
+  else:
+      print(f'Failed to retrieve data. Status code: {response.status_code}')
+
+  race_dataframes = {}
+  numbered_dict ={}
+  for race_number in race_dict:
+      df = pd.DataFrame(race_dict[race_number])
+      df.index += 1  # Set index to start from 1
+      numbered_list = [f"{i+1}. {name}" for i, name in enumerate(race_dict[race_number]['馬名'])]
+      numbered_dict[race_number] = numbered_list
+      race_dataframes[race_number] = df
+  
+top_container = st.container()
+# 定義單一的 placeholder
+placeholder = st.empty()
+
+if st.session_state.reset:
+    with top_container:
+      st.write(f"DataFrame for Race No: {race_no}")
+      st.dataframe(race_dataframes[race_no], use_container_width=True)
+    odds_dict = {}
+    for method in methodlist:
+        odds_dict[method] = pd.DataFrame()
+    investment_dict = {}
+    for method in methodlist:
+        investment_dict[method] = pd.DataFrame()
+    overall_investment_dict = {}
+    for method in methodlist:
+        overall_investment_dict.setdefault(method, pd.DataFrame())
+    overall_investment_dict.setdefault('overall', pd.DataFrame())
+    weird_dict = {}
+    for method in methodlist:
+        weird_dict.setdefault(method, pd.DataFrame([], columns=['No.', 'error', 'odds', 'Highlight']))
+    diff_dict = {}
+    for method in methodlist:
+        diff_dict.setdefault(method, pd.DataFrame())
+    diff_dict.setdefault('overall', pd.DataFrame())
+    
+
+    # 使用 post time 作為條件
+    start_time = time.time()
+    end_time = start_time + 60*10000
+    while time.time()<=end_time:  # 在 post time 前更新
+        with placeholder.container():
+            time_now = datetime.now() + datere.relativedelta(hours=8)
+            odds = get_odds_data()
+            investments = get_investment_data()
+            period = 2
+            
+            main(time_now, odds, investments, period)
+            time.sleep(15)
