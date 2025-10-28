@@ -27,29 +27,197 @@ def get_race_basic_data(Date, place):
         'Content-Type': 'application/json',
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
     }
-    payload = {
-        "operationName": "raceMeetings",
-        "variables": {"date": str(Date), "venueCode": place},
-        "query": """
-        query raceMeetings($date: String, $venueCode: String) {
-          raceMeetings(date: $date, venueCode: $venueCode) {
-            races {
+      payload = {
+      "operationName": "raceMeetings",
+      "variables": {"date": str(Date), "venueCode": place},
+      "query": """
+      fragment raceFragment on Race {
+        id
+        no
+        status
+        raceName_en
+        raceName_ch
+        postTime
+        country_en
+        country_ch
+        distance
+        wageringFieldSize
+        go_en
+        go_ch
+        ratingType
+        raceTrack {
+          description_en
+          description_ch
+        }
+        raceCourse {
+          description_en
+          description_ch
+          displayCode
+        }
+        claCode
+        raceClass_en
+        raceClass_ch
+        judgeSigns {
+          value_en
+        }
+      }
+  
+      fragment racingBlockFragment on RaceMeeting {
+        jpEsts: pmPools(
+          oddsTypes: [TCE, TRI, FF, QTT, DT, TT, SixUP]
+          filters: ["jackpot", "estimatedDividend"]
+        ) {
+          leg {
+            number
+            races
+          }
+          oddsType
+          jackpot
+          estimatedDividend
+          mergedPoolId
+        }
+        poolInvs: pmPools(
+          oddsTypes: [WIN, PLA, QIN, QPL, CWA, CWB, CWC, IWN, FCT, TCE, TRI, FF, QTT, DBL, TBL, DT, TT, SixUP]
+        ) {
+          id
+          leg {
+            races
+          }
+        }
+        penetrometerReadings(filters: ["first"]) {
+          reading
+          readingTime
+        }
+        hammerReadings(filters: ["first"]) {
+          reading
+          readingTime
+        }
+        changeHistories(filters: ["top3"]) {
+          type
+          time
+          raceNo
+          runnerNo
+          horseName_ch
+          horseName_en
+          jockeyName_ch
+          jockeyName_en
+          scratchHorseName_ch
+          scratchHorseName_en
+          handicapWeight
+          scrResvIndicator
+        }
+      }
+  
+      query raceMeetings($date: String, $venueCode: String) {
+        timeOffset {
+          rc
+        }
+        activeMeetings: raceMeetings {
+          id
+          venueCode
+          date
+          status
+          races {
+            no
+            postTime
+            status
+            wageringFieldSize
+          }
+        }
+        raceMeetings(date: $date, venueCode: $venueCode) {
+          id
+          status
+          venueCode
+          date
+          totalNumberOfRace
+          currentNumberOfRace
+          dateOfWeek
+          meetingType
+          totalInvestment
+          country {
+            code
+            namech
+            nameen
+            seq
+          }
+          races {
+            ...raceFragment
+            runners {
+              id
               no
-              postTime
-              runners {
+              standbyNo
+              status
+              name_ch
+              name_en
+              horse {
                 id
-                no
-                standbyNo
+                code
+              }
+              color
+              barrierDrawNumber
+              handicapWeight
+              currentWeight
+              currentRating
+              internationalRating
+              gearInfo
+              racingColorFileName
+              allowance
+              trainerPreference
+              last6run
+              saddleClothNo
+              trumpCard
+              priority
+              finalPosition
+              deadHeat
+              winOdds
+              jockey {
+                code
+                name_en
                 name_ch
-                jockey { name_ch }
-                trainer { name_ch }
-                last6run
+              }
+              trainer {
+                code
+                name_en
+                name_ch
               }
             }
           }
+          obSt: pmPools(oddsTypes: [WIN, PLA]) {
+            leg {
+              races
+            }
+            oddsType
+            comingleStatus
+          }
+          poolInvs: pmPools(
+            oddsTypes: [WIN, PLA, QIN, QPL, CWA, CWB, CWC, IWN, FCT, TCE, TRI, FF, QTT, DBL, TBL, DT, TT, SixUP]
+          ) {
+            id
+            leg {
+              number
+              races
+            }
+            status
+            sellStatus
+            oddsType
+            investment
+            mergedPoolId
+            lastUpdateTime
+          }
+          ...racingBlockFragment
+          pmPools(oddsTypes: []) {
+            id
+          }
+          jkcInstNo: foPools(oddsTypes: [JKC], filters: ["top"]) {
+            instNo
+          }
+          tncInstNo: foPools(oddsTypes: [TNC], filters: ["top"]) {
+            instNo
+          }
         }
-        """
-    }
+      }
+      """
+  }
     try:
         r = requests.post(url, headers=headers, json=payload, timeout=15)
         if r.status_code != 200:
