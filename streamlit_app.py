@@ -1023,6 +1023,9 @@ if not st.session_state.api_called:
   
 top_container = st.container()
 if st.session_state.get('reset', False):
+    with top_container:
+      st.write(f"DataFrame for Race No: {race_no}")
+      st.dataframe(race_dataframes[race_no], use_container_width=True)
     # 初始化狀態
     st.session_state.update({
         'odds_dict': {m: pd.DataFrame() for m in methodlist},
