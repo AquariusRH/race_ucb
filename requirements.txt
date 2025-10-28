@@ -1,1 +1,8 @@
-streamlit
+streamlit==1.49.0
+matplotlib
+streamlit-autorefresh
+ipywidgets
+asyncio
+aiohttp
+nest_asyncio
+bs4
