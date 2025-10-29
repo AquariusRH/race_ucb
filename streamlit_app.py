@@ -737,7 +737,7 @@ def run_ucb_prediction(race_no, odds, investment_dict, ucb_dict, race_dict):
             '次數': ucb_state['selected_count'][h],
             '排名': f"Top {top4.index(h)+1}" if h in top4 else ""
         })
-    df_ucb = pd.DataFrame(table_data).sort_values('UCB', ascending=False)
+    df_ucb = pd.DataFrame(table_data).sort_values(['次數','UCB'], ascending=False)
     
     # 8. 存入 history
     ucb_data['history'][t] = df_ucb.copy()
