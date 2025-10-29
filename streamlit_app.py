@@ -1063,7 +1063,8 @@ if not st.session_state.api_called:
   
 top_container = st.container()
 placeholder = st.empty()
-ucb_placeholder = st.empty()
+if 'ucb_dict' not in st.session_state:
+        st.session_state.ucb_dict = {}
 if st.session_state.get('reset', False):
     with top_container:
       st.write(f"DataFrame for Race No: {race_no}")
