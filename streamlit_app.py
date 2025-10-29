@@ -1113,27 +1113,18 @@ if st.session_state.get('reset', False):
                     df_ucb, top4 = run_ucb_prediction(
                         race_no=race_no,
                         odds=odds,
-                        investment_dict=investment_dict,
+                        investment_dict=overall_investment_dict,
                         ucb_dict=st.session_state.ucb_dict,
                         race_dict=race_dict
                     )
             with ucb_placeholder.container():
-                available_races = sorted([k for k in race_dict.keys() if k in st.session_state.ucb_dict])
-                selected_race = st.selectbox("查看 UCB 場次", available_races, index=available_races.index(race_no) if race_no in available_races else 0)
-                
                 display_ucb = st.session_state.ucb_dict[selected_race]
                 latest_t = max(display_ucb['history'].keys()) if display_ucb['history'] else 0
                 df_display = display_ucb['history'].get(latest_t)
             
                 st.subheader(f"第 {selected_race} 場 UCB 即時預測（第 {latest_t} 次更新）")
                 if df_display is not None:
-                    styled = df_display.head(8).style.apply(
-                        lambda row: ['background-color: #90EE90' if 'Top 1' in str(row['排名'])
-                                   else 'background-color: #FFFFE0' if 'Top 2' in str(row['排名'])
-                                   else 'background-color: #FFB6C1' if 'Top 3' in str(row['排名'])
-                                   else 'background-color: #87CEEB' if 'Top 4' in str(row['排名']) else ''
-                                   for _ in row], axis=1)
-                    st.dataframe(styled, use_container_width=True)
+                    st.dataframe(df_display, use_container_width=True)
                     top4 = display_ucb['top4_history'].get(latest_t, [])
                     st.info(f"**即時 Top 4**：{', '.join([f'馬 {h}' for h in top4])}")
             time.sleep(15)
