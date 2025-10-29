@@ -1046,7 +1046,7 @@ if st.session_state.get('reset', False):
         diff_dict.setdefault(method, pd.DataFrame())
     diff_dict.setdefault('overall', pd.DataFrame())
     if 'ucb_state' not in st.session_state:
-      n_horses = len(race_dict[race_no]['馬號'])
+      n_horses = len(race_dict[race_no]['馬名'])
       st.session_state.ucb_state = {
           't': 0,
           'selected_count': {i+1: 0 for i in range(n_horses)},
