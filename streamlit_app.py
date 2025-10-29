@@ -1080,7 +1080,8 @@ if st.session_state.get('reset', False):
                 df_ucb, top4 = run_ucb_prediction(win_odds, total_win_inv, horses, ucb_state, ucb_state['t'])
 
                 # 開賽前 1 分鐘鎖定
-                if (post_time_dict[race_no] - time_now).total_seconds() <= 60 and not ucb_state['locked']:
+                race_time = np.datetime64(post_time_dict[race_no]  + timedelta(hours=8))
+                if (race_time - time_now).total_seconds() <= 60 and not ucb_state['locked']:
                     ucb_state['locked'] = True
                     ucb_state['final_ucb_df'] = df_ucb
 
