@@ -1098,4 +1098,4 @@ if st.session_state.get('reset', False):
                         st.dataframe(df_ucb.head(8), use_container_width=True)
 
             time.sleep(15)
-            st.rerun()
+           
