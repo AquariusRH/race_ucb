@@ -672,7 +672,7 @@ def run_ucb_prediction(win_odds, total_win_inv, horses, state, t):
         state['momentum_hist'][h].append(inv_per_horse[idx])
         hist = state['momentum_hist'][h]
         raw = hist[-1] - hist[-2] if len(hist) >= 2 else 0
-        momentum[h] = raw / (inv_mean + 1e-6)
+        momentum[h] = raw / (inv_mean)
     st.write(momentum)
     # UCB 計算（防熱門）
     ucb_values = {}
@@ -1069,7 +1069,7 @@ if st.session_state.get('reset', False):
             # --- UCB 預測 ---
             if odds.get('WIN') and len(odds['WIN']) > 0:
                 win_odds = np.array([o if o != np.inf else 999 for o in odds['WIN']])
-                total_win_inv = investments.get('WIN', [0])[0] if investments.get('WIN') else 0
+                total_win_inv = overall_investment_dict['overall']
                 horses = list(range(1, len(win_odds) + 1))
     
                 # 強制 t + 1
