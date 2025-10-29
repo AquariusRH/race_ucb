@@ -1024,16 +1024,6 @@ if not st.session_state.api_called:
 top_container = st.container()
 placeholder = st.empty()
 ucb_placeholder = st.empty()
-if 'ucb_state' not in st.session_state:
-    n_horses = len(race_dict[race_no]['馬號'])
-    st.session_state.ucb_state = {
-        't': 0,
-        'selected_count': {i+1: 0 for i in range(n_horses)},
-        'momentum_hist': {i+1: [] for i in range(n_horses)},
-        'final_ucb_df': None,
-        'locked': False
-    }
-ucb_state = st.session_state.ucb_state
 if st.session_state.get('reset', False):
     with top_container:
       st.write(f"DataFrame for Race No: {race_no}")
@@ -1055,7 +1045,16 @@ if st.session_state.get('reset', False):
     for method in methodlist:
         diff_dict.setdefault(method, pd.DataFrame())
     diff_dict.setdefault('overall', pd.DataFrame())
-    
+    if 'ucb_state' not in st.session_state:
+      n_horses = len(race_dict[race_no]['馬號'])
+      st.session_state.ucb_state = {
+          't': 0,
+          'selected_count': {i+1: 0 for i in range(n_horses)},
+          'momentum_hist': {i+1: [] for i in range(n_horses)},
+          'final_ucb_df': None,
+          'locked': False
+      }
+    ucb_state = st.session_state.ucb_state
     start_time = time.time()
     end_time = start_time + 60*10000
 
