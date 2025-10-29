@@ -665,10 +665,6 @@ def run_ucb_prediction(win_odds, total_win_inv, horses, state, t):
     n_horses = len(win_odds)
     inv_per_horse = total_win_inv / win_odds if total_win_inv > 0 else np.zeros(n_horses)
     inv_mean = np.mean(inv_per_horse) if np.mean(inv_per_horse) > 0 else 1
-    st.write(total_win_inv)
-    st.write(inv_per_horse)
-    st.write(inv_mean)
-    st.write(win_odds)
     # 正規化動量
     momentum = {}
     for h in horses:
@@ -677,7 +673,7 @@ def run_ucb_prediction(win_odds, total_win_inv, horses, state, t):
         hist = state['momentum_hist'][h]
         raw = hist[-1] - hist[-2] if len(hist) >= 2 else 0
         momentum[h] = raw / (inv_mean + 1e-6)
-
+    st.write(momentum)
     # UCB 計算（防熱門）
     ucb_values = {}
     for h in horses:
