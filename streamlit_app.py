@@ -734,6 +734,7 @@ def run_ucb_prediction(race_no, odds, investment_dict, ucb_dict, race_dict):
             '賠率': f"{win_odds[i]:.2f}",
             '動量': f"{momentum.get(h, 0):.3f}",
             'UCB': f"{ucb_values.get(h, 0):.3f}",
+            '次數':  ucb_state['selected_count'][i]
             '排名': f"Top {top4.index(h)+1}" if h in top4 else ""
         })
     df_ucb = pd.DataFrame(table_data).sort_values('UCB', ascending=False)
