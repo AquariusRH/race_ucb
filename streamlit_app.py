@@ -1122,7 +1122,7 @@ if st.session_state.get('reset', False):
                 latest_t = max(display_ucb['history'].keys()) if display_ucb['history'] else 0
                 df_display = display_ucb['history'].get(latest_t)
             
-                st.subheader(f"第 {selected_race} 場 UCB 即時預測（第 {latest_t} 次更新）")
+                st.subheader(f"第 {race_no} 場 UCB 即時預測（第 {latest_t} 次更新）")
                 if df_display is not None:
                     st.dataframe(df_display, use_container_width=True)
                     top4 = display_ucb['top4_history'].get(latest_t, [])
