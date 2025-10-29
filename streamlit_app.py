@@ -1095,7 +1095,7 @@ if st.session_state.get('reset', False):
                         st.dataframe(styled, use_container_width=True)
                         st.info(f"**最終 Top 4**：{', '.join([f'馬 {h}' for h in top4])}")
                     else:
-                        st.dataframe(df_ucb.head(8), use_container_width=True)
+                        st.dataframe(df_ucb, use_container_width=True)
 
             time.sleep(15)
            
