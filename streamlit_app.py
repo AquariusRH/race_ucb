@@ -1113,7 +1113,7 @@ if st.session_state.get('reset', False):
                     df_ucb, top4 = run_ucb_prediction(
                         race_no=race_no,
                         odds=odds,
-                        investment_dict=st.session_state.investment_dict,
+                        investment_dict=investment_dict,
                         ucb_dict=st.session_state.ucb_dict,
                         race_dict=race_dict
                     )
