@@ -1070,9 +1070,9 @@ if st.session_state.get('reset', False):
             main(time_now, odds, investments, period=2)
             
             # --- UCB 預測 ---
-          ucb_data = st.session_state.ucb_dict[race_no]
-          ucb_state = ucb_data['state']
-          ucb_history = ucb_data['history']
+            ucb_data = st.session_state.ucb_dict[race_no]
+            ucb_state = ucb_data['state']
+            ucb_history = ucb_data['history']
             if odds.get('WIN') and len(odds['WIN']) > 0:
                 win_odds = np.array([o if o != np.inf else 999 for o in odds['WIN']])
                 total_win_inv = overall_investment_dict['overall']
