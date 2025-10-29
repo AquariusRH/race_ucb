@@ -1063,7 +1063,7 @@ if not st.session_state.api_called:
   
 top_container = st.container()
 placeholder = st.empty()
-ucb_placeholder.container= st.container()
+ucb_placeholder= st.container()
 if 'ucb_dict' not in st.session_state:
         st.session_state.ucb_dict = {}
 if st.session_state.get('reset', False):
