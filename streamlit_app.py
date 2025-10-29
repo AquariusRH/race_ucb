@@ -743,7 +743,7 @@ def run_ucb_prediction(race_no, odds, investment_dict, ucb_dict, race_dict):
     #ucb_data['history'][t] = df_ucb.copy()
     #ucb_data['top4_history'][t] = top4.copy()
     
-    return df_ucb, top4
+    return df_ucb, top4,t
 
 def main(time_now,odds,investments,period):
   save_odds_data(time_now,odds)
@@ -1113,7 +1113,7 @@ if st.session_state.get('reset', False):
             
             # --- UCB 預測 ---
             if 'WIN' in odds and odds['WIN']:
-                    df_ucb, top4 = run_ucb_prediction(
+                    df_ucb, top4 ,latest_t= run_ucb_prediction(
                         race_no=race_no,
                         odds=odds,
                         investment_dict=overall_investment_dict,
@@ -1122,7 +1122,6 @@ if st.session_state.get('reset', False):
                     )
             with ucb_placeholder.container():
                 display_ucb = st.session_state.ucb_dict[race_no]
-                latest_t = ucb_state['t']
                 df_display = df_ucb
             
                 st.subheader(f"第 {race_no} 場 UCB 即時預測（第 {latest_t} 次更新）")
