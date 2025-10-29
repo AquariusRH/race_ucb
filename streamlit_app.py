@@ -1070,14 +1070,14 @@ if st.session_state.get('reset', False):
 
             # --- UCB 預測 ---
             if odds.get('WIN') and len(odds['WIN']) > 0:
-              win_odds = np.array([o if o != np.inf else 999 for o in odds['WIN']])
-              total_win_inv = investments.get('WIN', [0])[0] if investments.get('WIN') else 0
-              horses = list(range(1, len(win_odds) + 1))
-  
-              # 強制 t + 1
-              ucb_state['t'] += 1
-  
-              df_ucb, top4 = run_ucb_prediction(win_odds, total_win_inv, horses, ucb_state, ucb_state['t'])
+                win_odds = np.array([o if o != np.inf else 999 for o in odds['WIN']])
+                total_win_inv = investments.get('WIN', [0])[0] if investments.get('WIN') else 0
+                horses = list(range(1, len(win_odds) + 1))
+    
+                # 強制 t + 1
+                ucb_state['t'] += 1
+    
+                df_ucb, top4 = run_ucb_prediction(win_odds, total_win_inv, horses, ucb_state, ucb_state['t'])
 
                 # 開賽前 1 分鐘鎖定
                 race_time = np.datetime64(post_time_dict[race_no]  + timedelta(hours=8))
