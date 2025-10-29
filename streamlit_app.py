@@ -740,8 +740,8 @@ def run_ucb_prediction(race_no, odds, investment_dict, ucb_dict, race_dict):
     df_ucb = pd.DataFrame(table_data).sort_values(['次數','UCB'], ascending=False)
     
     # 8. 存入 history
-    ucb_data['history'][t] = df_ucb.copy()
-    ucb_data['top4_history'][t] = top4.copy()
+    #ucb_data['history'][t] = df_ucb.copy()
+    #ucb_data['top4_history'][t] = top4.copy()
     
     return df_ucb, top4
 
@@ -1122,8 +1122,8 @@ if st.session_state.get('reset', False):
                     )
             with ucb_placeholder.container():
                 display_ucb = st.session_state.ucb_dict[race_no]
-                latest_t = max(display_ucb['history'].keys()) if display_ucb['history'] else 0
-                df_display = display_ucb['history'].get(latest_t)
+                latest_t = ucb_state['t']
+                df_display = df_ucb
             
                 st.subheader(f"第 {race_no} 場 UCB 即時預測（第 {latest_t} 次更新）")
                 if df_display is not None:
