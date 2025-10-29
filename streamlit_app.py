@@ -689,7 +689,7 @@ def run_ucb_prediction(race_no, odds, investment_dict, ucb_dict, race_dict):
     t = ucb_state['t']
     
     # 3. 基本資料
-    win_odds = np.array([o if o != np.inf else 999 for o in odds['WIN']])
+    win_odds = np.array([o for o in odds['WIN']])
     horses = list(range(1, len(win_odds) + 1))
     
     # 4. 動量（投注增量）
@@ -706,6 +706,10 @@ def run_ucb_prediction(race_no, odds, investment_dict, ucb_dict, race_dict):
     ucb_values = {}
     for h in horses:
         i = h - 1
+        if win_odds[i] == np.inf:
+          scr_indicator = 0
+        else:
+          scr_indicator = 1
         n_i = max(ucb_state['selected_count'].get(h, 0), 1)
         exploration = 2.0 * np.sqrt(np.log(max(t, 1)) / n_i)
         value_bonus = 1.0 / np.sqrt(win_odds[i])
@@ -717,8 +721,8 @@ def run_ucb_prediction(race_no, odds, investment_dict, ucb_dict, race_dict):
             exploration +                 # 探索
             value_bonus #+                 # 價值
             #penalty                       # 懲罰
-        )
-    
+        ) * scr_indicator
+        
     # 6. 選 Top 4
     top4 = sorted(ucb_values, key=ucb_values.get, reverse=True)[:4]
     for h in top4:
