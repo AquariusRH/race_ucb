@@ -667,7 +667,7 @@ def run_ucb_prediction(win_odds, total_win_inv, horses, state, t):
     inv_mean = np.mean(inv_per_horse) if np.mean(inv_per_horse) > 0 else 1
     # 正規化動量
     momentum = {}
-        for i in range(n_horses):
+    for i in range(n_horses):
             h = i + 1
             momentum_hist[h].append(inv_per_horse[i])
             hist = momentum_hist[h]
