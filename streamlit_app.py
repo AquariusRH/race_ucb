@@ -682,8 +682,8 @@ def run_ucb_prediction(win_odds, total_win_inv, horses, state, t):
         exploration = 2.0 * np.sqrt(np.log(t) / n)
         value_bonus = 1.0 / (win_odds[h-1] ** 0.5)
         avg_sel = np.mean(list(state['selected_count'].values()))
-        penalty = -0.3 * (state['selected_count'][h] - avg_sel) ** 2
-        ucb_values[h] = momentum[h] * 2.0 + exploration + value_bonus + penalty
+        #penalty = -0.3 * (state['selected_count'][h] - avg_sel) ** 2
+        ucb_values[h] = momentum[h] * 2.0 + exploration + value_bonus #+ penalty
 
     # 選 Top 4
     top4 = sorted(ucb_values, key=ucb_values.get, reverse=True)[:4]
