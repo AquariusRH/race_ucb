@@ -1057,12 +1057,12 @@ if st.session_state.get('reset', False):
     })
 
 
-    post_time = post_time_dict[race_no].astimezone(pytz.timezone('Asia/Hong_Kong'))
-    end_time = post_time + timedelta(minutes=30)  # 最多監測到開賽後 30 分
+    start_time = time.time()
+    end_time = start_time + 60*10000
 
-    while datetime.now(pytz.timezone('Asia/Hong_Kong')) < end_time:
+    while time.time()<=end_time: < end_time:
         with placeholder.container():
-            time_now = datetime.now(pytz.timezone('Asia/Hong_Kong'))
+            time_now = datetime.now() + datere.relativedelta(hours=8)
             odds = get_odds_data()
             investments = get_investment_data()
 
