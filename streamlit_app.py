@@ -1118,7 +1118,7 @@ if st.session_state.get('reset', False):
                         race_dict=race_dict
                     )
             with ucb_placeholder.container():
-                display_ucb = st.session_state.ucb_dict[selected_race]
+                display_ucb = st.session_state.ucb_dict[race_no]
                 latest_t = max(display_ucb['history'].keys()) if display_ucb['history'] else 0
                 df_display = display_ucb['history'].get(latest_t)
             
