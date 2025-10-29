@@ -1060,7 +1060,7 @@ if st.session_state.get('reset', False):
     start_time = time.time()
     end_time = start_time + 60*10000
 
-    while time.time()<=end_time: < end_time:
+    while time.time()<=end_time:
         with placeholder.container():
             time_now = datetime.now() + datere.relativedelta(hours=8)
             odds = get_odds_data()
