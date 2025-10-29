@@ -1081,7 +1081,7 @@ if st.session_state.get('reset', False):
 
                 # 開賽前 1 分鐘鎖定
                 race_time = np.datetime64(post_time_dict[race_no]  + timedelta(hours=8))
-                if (race_time - time_now).total_seconds() <= 60 and not ucb_state['locked']:
+                if (time_now - race_time).total_seconds() <= 60 and not ucb_state['locked']:
                     ucb_state['locked'] = True
                     ucb_state['final_ucb_df'] = df_ucb
 
