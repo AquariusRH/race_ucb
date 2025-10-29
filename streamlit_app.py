@@ -1089,7 +1089,7 @@ if st.session_state.get('reset', False):
     st.session_state.reset = True
 
     if race_no not in st.session_state.ucb_dict:
-      n_horses = len(race_dict[race_no]['馬號'])
+      n_horses = len(race_dict[race_no]['馬名'])
       st.session_state.ucb_dict[race_no] = {
         'state': {
             't': 0,
