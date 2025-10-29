@@ -1012,7 +1012,8 @@ if not st.session_state.api_called:
       print(f'Failed to retrieve data. Status code: {response.status_code}')
 
   race_dataframes = {}
-  numbered_dict ={}
+  numbered_dict = {}
+  ubc_dict= {}
   for race_number in race_dict:
       df = pd.DataFrame(race_dict[race_number])
       df.index += 1  # Set index to start from 1
@@ -1044,16 +1045,26 @@ if st.session_state.get('reset', False):
     for method in methodlist:
         diff_dict.setdefault(method, pd.DataFrame())
     diff_dict.setdefault('overall', pd.DataFrame())
-    if 'ucb_state' not in st.session_state:
-      n_horses = len(race_dict[race_no]['馬名'])
-      st.session_state.ucb_state = {
-          't': 0,
-          'selected_count': {i+1: 0 for i in range(n_horses)},
-          'momentum_hist': {i+1: [] for i in range(n_horses)},
-          'final_ucb_df': None,
-          'locked': False
-      }
-    ucb_state = st.session_state.ucb_state
+    st.session_state.reset = True
+
+    # 初始化 ucb_dict（每場獨立）
+    if 'ucb_dict' not in st.session_state:
+        st.session_state.ucb_dict = {}
+
+    # 為當前 race_no 初始化
+    if race_no not in st.session_state.ucb_dict:
+        n_horses = len(race_dict[race_no]['馬名'])
+        st.session_state.ucb_dict[race_no] = {
+            'state': {
+                't': 0,
+                'selected_count': {i+1: 0 for i in range(n_horses)},
+                'final_ucb_df': None,
+                'locked': False
+            },
+            'history': {},        # {t: df_ucb}
+            'top4_history': {},   # {t: [top4]}
+            'momentum_cache': {}  # 加速用
+        }
     start_time = time.time()
     end_time = start_time + 60*10000
 
@@ -1076,25 +1087,7 @@ if st.session_state.get('reset', False):
                 ucb_state['t'] += 1
     
                 df_ucb, top4 = run_ucb_prediction(win_odds, total_win_inv, horses, ucb_state, ucb_state['t'])
-
-                # 開賽前 1 分鐘鎖定
-                race_time = np.datetime64(post_time_dict[race_no]  + timedelta(hours=8))
-                if (race_time - time_now).total_seconds() <= 60 and not ucb_state['locked']:
-                    ucb_state['locked'] = True
-                    ucb_state['final_ucb_df'] = df_ucb
-
-                with ucb_placeholder.container():
-                    st.subheader("UCB 即時預測（每次選 Top 4）")
-                    if ucb_state['locked']:
-                        st.success("最終預測鎖定！")
-                        styled = df_ucb.style.apply(lambda row: ['background-color: lightgreen' if 'Top 1' in row['排名'] else
-                                                              'background-color: lightyellow' if 'Top 2' in row['排名'] else
-                                                              'background-color: lightsalmon' if 'Top 3' in row['排名'] else
-                                                              'background-color: lightblue' if 'Top 4' in row['排名'] else '' for _ in row], axis=1)
-                        st.dataframe(styled, use_container_width=True)
-                        st.info(f"**最終 Top 4**：{', '.join([f'馬 {h}' for h in top4])}")
-                    else:
-                        st.dataframe(df_ucb, use_container_width=True)
+                st.dataframe(df_ucb, use_container_width=True)
 
             time.sleep(15)
            
