@@ -703,7 +703,7 @@ def run_ucb_prediction(win_odds, total_win_inv, horses, state, t):
             'UCB': f"{ucb_values.get(h, 0):.3f}",
             '排名': f"Top {top4.index(h)+1}" if h in top4 else ""
         })
-    df = pd.DataFrame(table_data).sort_values('UCB', ascending=False)
+    df = pd.DataFrame(table_data).sort_values('被選次數', ascending=False)
     return df, top4
 
 def main(time_now,odds,investments,period):
@@ -1095,7 +1095,7 @@ if st.session_state.get('reset', False):
                         st.dataframe(styled, use_container_width=True)
                         st.info(f"**最終 Top 4**：{', '.join([f'馬 {h}' for h in top4])}")
                     else:
-                        st.dataframe(df_ucb.sorted_values(by="被選次數",ascending=False), use_container_width=True)
+                        st.dataframe(df_ucb, use_container_width=True)
 
             time.sleep(15)
            
