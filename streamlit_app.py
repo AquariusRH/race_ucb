@@ -708,15 +708,15 @@ def run_ucb_prediction(race_no, odds, investment_dict, ucb_dict, race_dict):
         i = h - 1
         n_i = max(ucb_state['selected_count'].get(h, 0), 1)
         exploration = 2.0 * np.sqrt(np.log(max(t, 1)) / n_i)
-        value_bonus = min(6.0 / np.sqrt(win_odds[i]), 3.0)
+        value_bonus = 1.0 / np.sqrt(win_odds[i])
         avg_sel = np.mean(list(ucb_state['selected_count'].values()))
-        penalty = -0.4 * (ucb_state['selected_count'].get(h, 0) - avg_sel) ** 2
+        #penalty = -0.4 * (ucb_state['selected_count'].get(h, 0) - avg_sel) ** 2
         
         ucb_values[h] = (
             momentum.get(h, 0) * 10.0 +   # 動量
             exploration +                 # 探索
-            value_bonus +                 # 價值
-            penalty                       # 懲罰
+            value_bonus #+                 # 價值
+            #penalty                       # 懲罰
         )
     
     # 6. 選 Top 4
