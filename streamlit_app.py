@@ -1120,7 +1120,6 @@ if st.session_state.get('reset', False):
                         ucb_dict=st.session_state.ucb_dict,
                         race_dict=race_dict
                     )
-            with ucb_placeholder.container():
                 display_ucb = st.session_state.ucb_dict[race_no]
                 df_display = df_ucb
             
