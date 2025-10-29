@@ -1047,27 +1047,19 @@ if st.session_state.get('reset', False):
     diff_dict.setdefault('overall', pd.DataFrame())
     st.session_state.reset = True
 
-    # 初始化 ucb_dict（每場獨立）
-    if 'ucb_dict' not in st.session_state:
-        st.session_state.ucb_dict = {}
-
-    # 為當前 race_no 初始化
     if race_no not in st.session_state.ucb_dict:
-        n_horses = len(race_dict[race_no]['馬名'])
-        st.session_state.ucb_dict[race_no] = {
-            'state': {
-                't': 0,
-                'selected_count': {i+1: 0 for i in range(n_horses)},
-                'final_ucb_df': None,
-                'locked': False
-            },
-            'history': {},        # {t: df_ucb}
-            'top4_history': {},   # {t: [top4]}
-            'momentum_cache': {}  # 加速用
-        }
+      n_horses = len(race_dict[race_no]['馬號'])
+      st.session_state.ucb_dict[race_no] = {
+        'state': {
+            't': 0,
+            'selected_count': {i+1: 0 for i in range(n_horses)}
+        },
+        'history': {},        # {t: df_ucb}
+        'top4_history': {}    # {t: [top4]}
+      }
     start_time = time.time()
     end_time = start_time + 60*10000
-
+    
     while time.time()<=end_time:
         with placeholder.container():
             time_now = datetime.now() + datere.relativedelta(hours=8)
@@ -1076,8 +1068,11 @@ if st.session_state.get('reset', False):
 
             # --- 你的原始分析 ---
             main(time_now, odds, investments, period=2)
-
+            
             # --- UCB 預測 ---
+          ucb_data = st.session_state.ucb_dict[race_no]
+          ucb_state = ucb_data['state']
+          ucb_history = ucb_data['history']
             if odds.get('WIN') and len(odds['WIN']) > 0:
                 win_odds = np.array([o if o != np.inf else 999 for o in odds['WIN']])
                 total_win_inv = overall_investment_dict['overall']
@@ -1085,6 +1080,7 @@ if st.session_state.get('reset', False):
     
                 # 強制 t + 1
                 ucb_state['t'] += 1
+                t = ucb_state['t']
     
                 df_ucb, top4 = run_ucb_prediction(win_odds, total_win_inv, horses, ucb_state, ucb_state['t'])
                 st.dataframe(df_ucb, use_container_width=True)
