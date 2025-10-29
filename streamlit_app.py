@@ -703,7 +703,7 @@ def run_ucb_prediction(win_odds, total_win_inv, horses, state, t):
             'UCB': f"{ucb_values.get(h, 0):.3f}",
             '排名': f"Top {top4.index(h)+1}" if h in top4 else ""
         })
-    df = pd.DataFrame(table_data).sort_values('被選次數', ascending=False)
+    df = pd.DataFrame(table_data).sort_values(by=['被選次數','UCB'], ascending=False)
     return df, top4
 
 def main(time_now,odds,investments,period):
