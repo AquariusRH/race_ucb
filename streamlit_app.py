@@ -1128,6 +1128,5 @@ if st.session_state.get('reset', False):
                 if df_display is not None:
                     st.dataframe(df_display, use_container_width=True)
                     top4 = display_ucb['top4_history'].get(latest_t, [])
-                    st.info(f"**即時 Top 4**：{', '.join([f'馬 {h}' for h in top4])}")
             time.sleep(15)
            
