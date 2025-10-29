@@ -1113,7 +1113,7 @@ if st.session_state.get('reset', False):
             
             # --- UCB 預測 ---
             if 'WIN' in odds and odds['WIN']:
-                    df_ucb, top4 ,latest_t= run_ucb_prediction(
+                df_ucb, top4 ,latest_t= run_ucb_prediction(
                         race_no=race_no,
                         odds=odds,
                         investment_dict=overall_investment_dict,
@@ -1127,5 +1127,6 @@ if st.session_state.get('reset', False):
                 if df_display is not None:
                     st.dataframe(df_display, use_container_width=True)
                     top4 = display_ucb['top4_history'].get(latest_t, [])
+                  
             time.sleep(15)
            
