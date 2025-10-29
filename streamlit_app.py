@@ -1022,17 +1022,31 @@ if not st.session_state.api_called:
       race_dataframes[race_number] = df
   
 top_container = st.container()
+placeholder = st.empty()
+ucb_placeholder = st.empty()
 if st.session_state.get('reset', False):
     with top_container:
       st.write(f"DataFrame for Race No: {race_no}")
       st.dataframe(race_dataframes[race_no], use_container_width=True)
+    odds_dict = {}
+    for method in methodlist:
+        odds_dict[method] = pd.DataFrame()
+    investment_dict = {}
+    for method in methodlist:
+        investment_dict[method] = pd.DataFrame()
+    overall_investment_dict = {}
+    for method in methodlist:
+        overall_investment_dict.setdefault(method, pd.DataFrame())
+    overall_investment_dict.setdefault('overall', pd.DataFrame())
+    weird_dict = {}
+    for method in methodlist:
+        weird_dict.setdefault(method, pd.DataFrame([], columns=['No.', 'error', 'odds', 'Highlight']))
+    diff_dict = {}
+    for method in methodlist:
+        diff_dict.setdefault(method, pd.DataFrame())
+    diff_dict.setdefault('overall', pd.DataFrame())
     # 初始化狀態
     st.session_state.update({
-        'odds_dict': {m: pd.DataFrame() for m in methodlist},
-        'investment_dict': {m: pd.DataFrame() for m in methodlist},
-        'overall_investment_dict': {m: pd.DataFrame() for m in methodlist + ['overall']},
-        'weird_dict': {m: pd.DataFrame(columns=['No.', 'error', 'odds', 'Highlight']) for m in methodlist},
-        'diff_dict': {m: pd.DataFrame() for m in methodlist + ['overall']},
         'ucb_state': {
             't': 0,
             'selected_count': {i+1: 0 for i in range(len(race_dict[race_no]['馬名']))},
@@ -1042,8 +1056,6 @@ if st.session_state.get('reset', False):
         }
     })
 
-    placeholder = st.empty()
-    ucb_placeholder = st.empty()
 
     post_time = post_time_dict[race_no].astimezone(pytz.timezone('Asia/Hong_Kong'))
     end_time = post_time + timedelta(minutes=30)  # 最多監測到開賽後 30 分
