@@ -907,7 +907,7 @@ def print_momentum():
             st.subheader("動量市場分析")
             
             df_mom, alert, fig = analyze_momentum(
-                investment_dict=st.session_state.investment_dict,
+                investment_dict=overall_investment_dict,
                 odds=odds,
                 race_dict=race_dict,
                 race_no=race_no,
