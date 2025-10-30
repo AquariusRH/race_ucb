@@ -793,7 +793,7 @@ def analyze_momentum(investment_dict, method='overall', threshold=0.3, window=3,
     # 3. 計算當前動量
     delta = np.maximum(df.iloc[-1].values - df.iloc[-2].values, 0)
     total_delta = delta.sum()
-
+    win_odds = np.array([o for o in odds['WIN']])
     # 4. 無變動 → 回上一次
     if total_delta == 0:
         return _get_cached_or_empty(cache_key)
