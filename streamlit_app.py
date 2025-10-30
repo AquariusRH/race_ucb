@@ -780,6 +780,7 @@ def analyze_momentum(investment_dict, method='overall', threshold=0.3, window=3)
         return pd.DataFrame(), None, None
 
     # 2. 計算動量（增量比例）
+    win_odds = np.array([o for o in odds['WIN']])
     delta = np.maximum(df.iloc[-1].values - df.iloc[-2].values, 0)
     total_delta = delta.sum()
     if total_delta == 0:
