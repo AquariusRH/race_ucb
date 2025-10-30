@@ -661,11 +661,16 @@ def print_highlight():
           crosstab_1 = pd.crosstab(filtered_df_1['No.'],filtered_df_1['Highlight']).sort_values(by='*', ascending=False)
           crosstab_1
 # 內部輔助函數
-def _get_cached_or_empty(cache_key):
-    """回上一次快取，或空值"""
-    if cache_key and cache_key in st.session_state:
+def _get_cached_or_empty(cache_key, surge_count_key):
+    if cache_key in st.session_state:
         cache = st.session_state[cache_key]
-        return cache['df'], cache['alert'], cache['fig']
+        # 保留爆量次數
+        if 'df' in cache and not cache['df'].empty:
+            # 重新注入最新爆量次數
+            df = cache['df'].copy()
+            for h in df['馬號']:
+                df.loc[df['馬號'] == h, '爆量次數'] = st.session_state.get(surge_count_key, {}).get(h, 0)
+            return df, cache['alert'], cache['fig']
     return pd.DataFrame(), None, None
   
 def run_ucb_prediction(race_no, odds, investment_dict, ucb_dict, race_dict):
