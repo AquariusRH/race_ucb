@@ -668,7 +668,7 @@ def _get_cached_or_empty(cache_key):
         return cache['df'], cache['alert'], cache['fig']
     return pd.DataFrame(), None, None
   
-def run_ucb_prediction(race_no, odds, investment_dict, ucb_dict, race_dict):
+def run_ucb_prediction(race_no, odds, investment_dict, ucb_dict, race_dict,cache_key=None):
     """
     執行 UCB 預測（不鎖定，持續更新）
     
