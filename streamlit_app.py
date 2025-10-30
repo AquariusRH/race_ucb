@@ -764,7 +764,7 @@ def run_ucb_prediction(race_no, odds, investment_dict, ucb_dict, race_dict):
     
     return df_ucb, top4,t
 
-def analyze_momentum(investment_dict, method='overall', threshold=0.3, window=5, cache_key=None):
+def analyze_momentum(investment_dict, method='overall', threshold=0.3, window=5, cache_key='momentum_cache', surge_count_key='surge_count'):
     """
     動量分析：保留平均動量做爆量偵測，回上一次圖表
 
