@@ -668,7 +668,7 @@ def _get_cached_or_empty(cache_key):
         return cache['df'], cache['alert'], cache['fig']
     return pd.DataFrame(), None, None
   
-def run_ucb_prediction(race_no, odds, investment_dict, ucb_dict, race_dict,cache_key=None):
+def run_ucb_prediction(race_no, odds, investment_dict, ucb_dict, race_dict):
     """
     執行 UCB 預測（不鎖定，持續更新）
     
@@ -764,7 +764,7 @@ def run_ucb_prediction(race_no, odds, investment_dict, ucb_dict, race_dict,cache
     
     return df_ucb, top4,t
 
-def analyze_momentum(investment_dict, method='overall', threshold=0.3, window=3):
+def analyze_momentum(investment_dict, method='overall', threshold=0.3, window=3,cache_key=None):
     """
     全新動量分析模組（可視化 + 警報 + 表格）
 
