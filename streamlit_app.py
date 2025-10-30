@@ -1138,6 +1138,6 @@ if st.session_state.get('reset', False):
                 st.subheader(f"第 {race_no} 場 UCB 即時預測（第 {latest_t} 次更新）")
                 if df_display is not None:
                     st.dataframe(df_display, use_container_width=True)
-            st.write(overall_investment_dict)
+            
             time.sleep(15)
            
