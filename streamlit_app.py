@@ -788,7 +788,7 @@ def analyze_momentum(
     race_dict,
     race_no,
     method='overall',
-    threshold=0.1,
+    threshold=0.01,
     window=5,
     cache_key='momentum_cache',
     surge_count_key='surge_count'
@@ -925,7 +925,7 @@ def print_momentum():
                 race_dict=race_dict,
                 race_no=race_no,
                 method='overall',
-                threshold=0.3,
+                threshold=0.01,
                 window=5,
                 cache_key='momentum_cache',
                 surge_count_key='surge_count'
