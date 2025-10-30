@@ -694,8 +694,8 @@ def run_ucb_prediction(race_no, odds, investment_dict, ucb_dict, race_dict):
     
     # 4. 動量（投注增量）
     momentum = {}
-    if 'WIN' in investment_dict and len(investment_dict['WIN']) >= 2:
-        df = investment_dict['WIN']
+    if 'WIN' in investment_dict and len(investment_dict['overall']) >= 2:
+        df = investment_dict['overall']
         delta = df.iloc[-1] - df.iloc[-2]
         delta = np.maximum(delta.values, 0)
         total = delta.sum()
