@@ -851,6 +851,46 @@ def analyze_momentum(investment_dict, method='overall', threshold=0.3, window=3)
 
     plt.tight_layout()
     return df_momentum, alert, fig
+  
+def print_ucb():
+            # --- UCB 預測 ---
+            if 'WIN' in odds and odds['WIN']:
+                df_ucb, top4 ,latest_t= run_ucb_prediction(
+                        race_no=race_no,
+                        odds=odds,
+                        investment_dict=overall_investment_dict,
+                        ucb_dict=st.session_state.ucb_dict,
+                        race_dict=race_dict
+                    )
+                display_ucb = st.session_state.ucb_dict[race_no]
+                df_display = df_ucb
+            
+                st.subheader(f"第 {race_no} 場 UCB 即時預測（第 {latest_t} 次更新）")
+                if df_display is not None:
+                    st.dataframe(df_display, use_container_width=True)
+                  
+def print_momentum():
+              # --- 全新動量分析區 ---
+            st.subheader("動量市場分析")
+            
+            df_mom, alert, fig = analyze_momentum(
+                overall_investment_dict,
+                method='overall',
+                threshold=0.3,
+                window=5
+            )
+            
+            if alert:
+                st.error(alert)
+            
+            if not df_mom.empty:
+                st.dataframe(df_mom.style.apply(
+                    lambda row: ['background-color: #ffcccc' if row['狀態'] == '爆量' else '' for _ in row], axis=1
+                ), use_container_width=True)
+            
+            if fig:
+                st.pyplot(fig)
+              
 def main(time_now,odds,investments,period):
   save_odds_data(time_now,odds)
   save_investment_data(time_now,investments,odds)
@@ -859,7 +899,8 @@ def main(time_now,odds,investments,period):
   change_overall(time_now)
   print_bar_chart(time_now)
   print_top()
-
+  print_ucb()
+  print_momentum()
 # Display the date picker widget
 infoColumns = st.columns(3)
 with infoColumns[0]:
@@ -1216,41 +1257,6 @@ if st.session_state.get('reset', False):
 
             # --- 你的原始分析 ---
             main(time_now, odds, investments, period=2)
-            
-            # --- UCB 預測 ---
-            if 'WIN' in odds and odds['WIN']:
-                df_ucb, top4 ,latest_t= run_ucb_prediction(
-                        race_no=race_no,
-                        odds=odds,
-                        investment_dict=overall_investment_dict,
-                        ucb_dict=st.session_state.ucb_dict,
-                        race_dict=race_dict
-                    )
-                display_ucb = st.session_state.ucb_dict[race_no]
-                df_display = df_ucb
-            
-                st.subheader(f"第 {race_no} 場 UCB 即時預測（第 {latest_t} 次更新）")
-                if df_display is not None:
-                    st.dataframe(df_display, use_container_width=True)
-            # --- 全新動量分析區 ---
-            st.subheader("動量市場分析")
-            
-            df_mom, alert, fig = analyze_momentum(
-                overall_investment_dict,
-                method='overall',
-                threshold=0.3,
-                window=5
-            )
-            
-            if alert:
-                st.error(alert)
-            
-            if not df_mom.empty:
-                st.dataframe(df_mom.style.apply(
-                    lambda row: ['background-color: #ffcccc' if row['狀態'] == '爆量' else '' for _ in row], axis=1
-                ), use_container_width=True)
-            
-            if fig:
-                st.pyplot(fig)
+
             time.sleep(15)
            
