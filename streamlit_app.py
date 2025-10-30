@@ -764,20 +764,17 @@ def run_ucb_prediction(race_no, odds, investment_dict, ucb_dict, race_dict):
     
     return df_ucb, top4,t
 
-def analyze_momentum(investment_dict, method='overall', threshold=0.3, window=3,cache_key=None):
+def analyze_momentum(investment_dict, method='overall', threshold=0.3, window=5, cache_key=None):
     """
-    全新動量分析模組（可視化 + 警報 + 表格）
+    動量分析：保留平均動量做爆量偵測，回上一次圖表
 
     Args:
-        investment_dict (dict): st.session_state.investment_dict
-        method (str): 'overall', 'WIN', 'PLA' 等
-        threshold (float): 單馬動量 > 30% 視為異常
+        investment_dict, method, threshold
         window (int): 計算近 N 次平均動量
+        cache_key (str): 快取 key，如 'mom_cache'
 
     Returns:
-        df_momentum (pd.DataFrame): 動量表格
-        alert (str or None): 警報訊息
-        fig (plt.Figure or None): 動量圖表
+        df_momentum, alert, fig
     """
     # 1. 快取初始化
     if cache_key and cache_key not in st.session_state:
@@ -793,35 +790,60 @@ def analyze_momentum(investment_dict, method='overall', threshold=0.3, window=3,
     # 3. 計算當前動量
     delta = np.maximum(df.iloc[-1].values - df.iloc[-2].values, 0)
     total_delta = delta.sum()
+    # 3. 基本資料
     win_odds = np.array([o for o in odds['WIN']])
+    horses = list(range(1, len(win_odds) + 1))
     # 4. 無變動 → 回上一次
     if total_delta == 0:
         return _get_cached_or_empty(cache_key)
 
-    # 5. 正規化動量
-    momentum = {i+1: delta[i] / total_delta for i in range(len(delta))}
+    # 5. 正規化當前動量
+    momentum_current = {i+1: delta[i] / total_delta for i in range(len(delta))}
 
-    # 6. 爆量偵測
-    surge_horses = [h for h, m in momentum.items() if m > threshold]
+    # 6. 計算平均動量（近 window 次）
+    momentum_history = []
+    for i in range(1, min(window, len(df)-1)):
+        prev_delta = np.maximum(df.iloc[-1-i].values - df.iloc[-2-i].values, 0)
+        prev_total = prev_delta.sum()
+        if prev_total > 0:
+            momentum_history.append({i+1: prev_delta[i] / prev_total for i in range(len(prev_delta))})
+
+    avg_momentum = {}
+    if momentum_history:
+        for h in momentum_current:
+            vals = [m.get(h, 0) for m in momentum_history]
+            avg_momentum[h] = np.mean(vals)
+    else:
+        avg_momentum = {h: 0 for h in momentum_current}
+
+    # 7. 爆量偵測（當前 > threshold 且 > 3x 平均）
+    surge_horses = [
+        h for h in momentum_current
+        if momentum_current[h] > threshold and momentum_current[h] > 3 * avg_momentum[h]
+    ]
     alert = f"爆量流入：{', '.join([f'馬 {h}' for h in surge_horses])}" if surge_horses else None
-    # 5. 建表格
+
+    # 8. 建表格（含平均動量）
     table_data = []
-    for h in momentum.keys():
+    for h in momentum_current:
+        curr = momentum_current[h]
+        avg = avg_momentum[h]
+        ratio = curr / max(avg, 1e-6)
         table_data.append({
             '馬號': h,
             '馬名': race_dict[race_no]['馬名'][h-1],
             '騎師': race_dict[race_no]['騎師'][h-1],
             '賠率': f"{win_odds[h-1]:.2f}",
-            '當前動量': f"{momentum[h]:.3f}",
-            '平均動量': f"{avg_momentum[h]:.3f}",
-            '倍數': f"{momentum[h]/max(avg_momentum[h], 1e-6):.1f}x",
+            '當前動量': f"{curr:.3f}",
+            '平均動量': f"{avg:.3f}",
+            '倍數': f"{ratio:.1f}x",
             '狀態': '爆量' if h in surge_horses else '正常'
         })
     df_momentum = pd.DataFrame(table_data).sort_values('當前動量', ascending=False)
 
-    # 8. 繪製熱圖
+    # 9. 繪製熱圖（僅當前）
     fig, ax = plt.subplots(figsize=(10, 2))
-    values = [momentum.get(i, 0) for i in range(1, len(delta)+1)]
+    values = [momentum_current.get(i, 0) for i in range(1, len(delta)+1)]
     im = ax.imshow([values], cmap='Reds', aspect='auto', vmin=0, vmax=0.5)
     ax.set_xticks(range(len(values)))
     ax.set_xticklabels([f"{i}" for i in range(1, len(values)+1)])
@@ -830,7 +852,7 @@ def analyze_momentum(investment_dict, method='overall', threshold=0.3, window=3,
     plt.colorbar(im, ax=ax, label='動量比例', shrink=0.8)
     plt.tight_layout()
 
-    # 9. 快取本次結果
+    # 10. 快取
     if cache_key:
         st.session_state[cache_key] = {
             'df': df_momentum.copy(),
