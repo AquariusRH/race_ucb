@@ -1232,7 +1232,7 @@ if st.session_state.get('reset', False):
             st.subheader("動量市場分析")
             
             df_mom, alert, fig = analyze_momentum(
-                st.session_state.investment_dict,
+                overall_investment_dict,
                 method='overall',
                 threshold=0.3,
                 window=5
