@@ -769,47 +769,53 @@ def run_ucb_prediction(race_no, odds, investment_dict, ucb_dict, race_dict):
     
     return df_ucb, top4,t
 
-def analyze_momentum(investment_dict, method='overall', threshold=0.3, window=5, cache_key='momentum_cache', surge_count_key='surge_count'):
+def analyze_momentum(
+    investment_dict,
+    odds,
+    race_dict,
+    race_no,
+    method='overall',
+    threshold=0.3,
+    window=5,
+    cache_key='momentum_cache',
+    surge_count_key='surge_count'
+):
     """
-    動量分析：保留平均動量做爆量偵測，回上一次圖表
+    動量分析 + 完整馬匹資訊 + 爆量次數累積
 
     Args:
-        investment_dict, method, threshold
-        window (int): 計算近 N 次平均動量
-        cache_key (str): 快取 key，如 'mom_cache'
-
-    Returns:
-        df_momentum, alert, fig
+        odds (dict): 包含 'WIN' 的賠率
+        race_dict (dict): 馬匹資料
+        race_no (int): 當前場次
+        ...其他參數
     """
-    # 1. 初始化爆量計數器
+    # 1. 初始化
     if surge_count_key not in st.session_state:
-        st.session_state[surge_count_key] = {}  # {馬號: 次數}
-
-    # 2. 快取初始化
+        st.session_state[surge_count_key] = {}
     if cache_key not in st.session_state:
         st.session_state[cache_key] = {'df': None, 'fig': None, 'alert': None}
 
-    # 3. 防錯
-    if method not in investment_dict:
+    # 2. 防錯
+    if method not in investment_dict or 'WIN' not in odds or race_no not in race_dict:
         return _get_cached_or_empty(cache_key, surge_count_key)
     df = investment_dict[method]
     if len(df) < 2:
         return _get_cached_or_empty(cache_key, surge_count_key)
 
-    # 3. 計算當前動量
+    # 3. 賠率處理
+    win_odds_raw = odds['WIN']
+    win_odds = np.array([o if o != np.inf else 999 for o in win_odds_raw])
+    horses = list(range(1, len(win_odds) + 1))
+
+    # 4. 計算當前動量
     delta = np.maximum(df.iloc[-1].values - df.iloc[-2].values, 0)
     total_delta = delta.sum()
-    # 3. 基本資料
-    win_odds = np.array([o for o in odds['WIN']])
-    horses = list(range(1, len(win_odds) + 1))
-    # 4. 無變動 → 回上一次
     if total_delta == 0:
-        return _get_cached_or_empty(cache_key,surge_count_key)
+        return _get_cached_or_empty(cache_key, surge_count_key)
 
-    # 5. 正規化當前動量
     momentum_current = {i+1: delta[i] / total_delta for i in range(len(delta))}
 
-    # 6. 計算平均動量（近 window 次）
+    # 5. 平均動量
     momentum_history = []
     for i in range(1, min(window, len(df)-1)):
         prev_delta = np.maximum(df.iloc[-1-i].values - df.iloc[-2-i].values, 0)
@@ -825,55 +831,57 @@ def analyze_momentum(investment_dict, method='overall', threshold=0.3, window=5,
     else:
         avg_momentum = {h: 0 for h in momentum_current}
 
-    # 7. 爆量偵測（當前 > threshold 且 > 3x 平均）
+    # 6. 爆量偵測 + 累積
     surge_horses = []
     for h in momentum_current:
         curr = momentum_current[h]
         avg = avg_momentum[h]
         if curr > threshold and curr > 3 * avg:
             surge_horses.append(h)
-            # 累積次數
             st.session_state[surge_count_key][h] = st.session_state[surge_count_key].get(h, 0) + 1
 
     alert = f"爆量流入：{', '.join([f'馬 {h}' for h in surge_horses])}" if surge_horses else None
-    # 8. 建表格（含平均動量）
+
+    # 7. 建完整表格
     table_data = []
-    for h in momentum_current:
-        curr = momentum_current[h]
-        avg = avg_momentum[h]
-        ratio = curr / max(avg, 1e-3)
+    for i, h in enumerate(horses):
+        curr = momentum_current.get(h, 0)
+        avg = avg_momentum.get(h, 0)
+        ratio = curr / max(avg, 1e-6)
         surge_count = st.session_state[surge_count_key].get(h, 0)
+        odds_display = f"{win_odds[i]:.2f}" if win_odds[i] < 999 else "SCR"
+
         table_data.append({
             '馬號': h,
-            '馬名': race_dict[race_no]['馬名'][h-1],
-            '騎師': race_dict[race_no]['騎師'][h-1],
-            '賠率': f"{win_odds[h-1]:.2f}",
+            '馬名': race_dict[race_no]['馬名'][i],
+            '騎師': race_dict[race_no]['騎師'][i],
+            '賠率': odds_display,
             '當前動量': f"{curr:.3f}",
             '平均動量': f"{avg:.3f}",
             '倍數': f"{ratio:.1f}x",
             '爆量次數': surge_count,
             '狀態': '爆量' if h in surge_horses else '正常'
         })
-    df_momentum = pd.DataFrame(table_data).sort_values('當前動量', ascending=False)
 
-    # 9. 繪製熱圖（僅當前）
-    fig, ax = plt.subplots(figsize=(10, 2))
-    values = [momentum_current.get(i, 0) for i in range(1, len(delta)+1)]
+    df_momentum = pd.DataFrame(table_data).sort_values(['爆量次數', '當前動量'], ascending=[False, False])
+
+    # 8. 熱圖
+    fig, ax = plt.subplots(figsize=(12, 2))
+    values = [momentum_current.get(i, 0) for i in horses]
     im = ax.imshow([values], cmap='Reds', aspect='auto', vmin=0, vmax=0.5)
-    ax.set_xticks(range(len(values)))
-    ax.set_xticklabels([f"{i}" for i in range(1, len(values)+1)])
+    ax.set_xticks(range(len(horses)))
+    ax.set_xticklabels([f"{i}" for i in horses])
     ax.set_yticks([])
-    ax.set_title(f"即時動量熱圖（{method}）")
+    ax.set_title(f"即時動量熱圖（{method}） - 第 {race_no} 場")
     plt.colorbar(im, ax=ax, label='動量比例', shrink=0.8)
     plt.tight_layout()
 
-    # 10. 快取
-    if cache_key:
-        st.session_state[cache_key] = {
-            'df': df_momentum.copy(),
-            'fig': fig,
-            'alert': alert
-        }
+    # 9. 快取
+    st.session_state[cache_key] = {
+        'df': df_momentum.copy(),
+        'fig': fig,
+        'alert': alert
+    }
 
     return df_momentum, alert, fig
   
