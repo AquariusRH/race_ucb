@@ -806,15 +806,15 @@ def analyze_momentum(investment_dict, method='overall', threshold=0.3, window=3,
     alert = f"爆量流入：{', '.join([f'馬 {h}' for h in surge_horses])}" if surge_horses else None
     # 5. 建表格
     table_data = []
-    for h in momentum_current.keys():
+    for h in momentum.keys():
         table_data.append({
             '馬號': h,
             '馬名': race_dict[race_no]['馬名'][h-1],
             '騎師': race_dict[race_no]['騎師'][h-1],
             '賠率': f"{win_odds[h-1]:.2f}",
-            '當前動量': f"{momentum_current[h]:.3f}",
+            '當前動量': f"{momentum[h]:.3f}",
             '平均動量': f"{avg_momentum[h]:.3f}",
-            '倍數': f"{momentum_current[h]/max(avg_momentum[h], 1e-6):.1f}x",
+            '倍數': f"{momentum[h]/max(avg_momentum[h], 1e-6):.1f}x",
             '狀態': '爆量' if h in surge_horses else '正常'
         })
     df_momentum = pd.DataFrame(table_data).sort_values('當前動量', ascending=False)
