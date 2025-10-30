@@ -832,7 +832,8 @@ def analyze_momentum(investment_dict, method='overall', threshold=0.3, window=5,
     for h in momentum_current:
         curr = momentum_current[h]
         avg = avg_momentum[h]
-        ratio = curr / max(avg, 1e-6)
+        ratio = curr / max(avg, 1e-3)
+        surge_count = st.session_state[surge_count_key].get(h, 0)
         table_data.append({
             '馬號': h,
             '馬名': race_dict[race_no]['馬名'][h-1],
