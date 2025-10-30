@@ -826,7 +826,7 @@ def analyze_momentum(
     if total_delta == 0:
         return _get_cached_or_empty(cache_key, surge_count_key)
 
-    momentum_current = {i+1: delta[i] *10/ total_delta for i in range(len(delta))}
+    momentum_current = {i+1: delta[i] / total_delta for i in range(len(delta))}
 
     # 5. 平均動量
     momentum_history = []
@@ -839,7 +839,7 @@ def analyze_momentum(
     avg_momentum = {}
     if momentum_history:
         for h in momentum_current:
-            vals = [m.get(h, 0) for m in momentum_history]
+            vals = [10*m.get(h, 0) for m in momentum_history]
             avg_momentum[h] = np.mean(vals)
     else:
         avg_momentum = {h: 0 for h in momentum_current}
