@@ -781,17 +781,20 @@ def analyze_momentum(investment_dict, method='overall', threshold=0.3, window=5,
     Returns:
         df_momentum, alert, fig
     """
-    # 1. 快取初始化
-    if cache_key and cache_key not in st.session_state:
-        st.session_state[cache_key] = {'df': None, 'fig': None, 'alert': None}
+    # 1. 初始化爆量計數器
     if surge_count_key not in st.session_state:
         st.session_state[surge_count_key] = {}  # {馬號: 次數}
-    # 2. 防錯
+
+    # 2. 快取初始化
+    if cache_key not in st.session_state:
+        st.session_state[cache_key] = {'df': None, 'fig': None, 'alert': None}
+
+    # 3. 防錯
     if method not in investment_dict:
-        return _get_cached_or_empty(cache_key)
+        return _get_cached_or_empty(cache_key, surge_count_key)
     df = investment_dict[method]
     if len(df) < 2:
-        return _get_cached_or_empty(cache_key)
+        return _get_cached_or_empty(cache_key, surge_count_key)
 
     # 3. 計算當前動量
     delta = np.maximum(df.iloc[-1].values - df.iloc[-2].values, 0)
