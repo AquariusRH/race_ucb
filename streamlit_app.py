@@ -660,7 +660,14 @@ def print_highlight():
         with highlightColumns[2]:
           crosstab_1 = pd.crosstab(filtered_df_1['No.'],filtered_df_1['Highlight']).sort_values(by='*', ascending=False)
           crosstab_1
-
+# 內部輔助函數
+def _get_cached_or_empty(cache_key):
+    """回上一次快取，或空值"""
+    if cache_key and cache_key in st.session_state:
+        cache = st.session_state[cache_key]
+        return cache['df'], cache['alert'], cache['fig']
+    return pd.DataFrame(), None, None
+  
 def run_ucb_prediction(race_no, odds, investment_dict, ucb_dict, race_dict):
     """
     執行 UCB 預測（不鎖定，持續更新）
@@ -772,44 +779,31 @@ def analyze_momentum(investment_dict, method='overall', threshold=0.3, window=3)
         alert (str or None): 警報訊息
         fig (plt.Figure or None): 動量圖表
     """
-    # 1. 防錯
+    # 1. 快取初始化
+    if cache_key and cache_key not in st.session_state:
+        st.session_state[cache_key] = {'df': None, 'fig': None, 'alert': None}
+
+    # 2. 防錯
     if method not in investment_dict:
-        return pd.DataFrame(), None, None
+        return _get_cached_or_empty(cache_key)
     df = investment_dict[method]
     if len(df) < 2:
-        return pd.DataFrame(), None, None
+        return _get_cached_or_empty(cache_key)
 
-    # 2. 計算動量（增量比例）
-    win_odds = np.array([o for o in odds['WIN']])
+    # 3. 計算當前動量
     delta = np.maximum(df.iloc[-1].values - df.iloc[-2].values, 0)
     total_delta = delta.sum()
+
+    # 4. 無變動 → 回上一次
     if total_delta == 0:
-        return pd.DataFrame(), "市場無投注變動", None
+        return _get_cached_or_empty(cache_key)
 
-    momentum_current = {i+1: delta[i] / total_delta for i in range(len(delta))}
+    # 5. 正規化動量
+    momentum = {i+1: delta[i] / total_delta for i in range(len(delta))}
 
-    # 3. 計算歷史平均動量（近 window 次）
-    momentum_history = []
-    for i in range(1, min(window, len(df)-1)):
-        prev_delta = np.maximum(df.iloc[-1-i].values - df.iloc[-2-i].values, 0)
-        prev_total = prev_delta.sum()
-        if prev_total > 0:
-            momentum_history.append({i+1: prev_delta[i] / prev_total for i in range(len(prev_delta))})
-
-    avg_momentum = {}
-    if momentum_history:
-        for h in momentum_current.keys():
-            vals = [m.get(h, 0) for m in momentum_history]
-            avg_momentum[h] = np.mean(vals) if vals else 0
-    else:
-        avg_momentum = {h: 0 for h in momentum_current.keys()}
-
-    # 4. 異常偵測
-    alert = None
-    surge_horses = [h for h, m in momentum_current.items() if m > threshold and m > 3 * avg_momentum.get(h, 0)]
-    if surge_horses:
-        alert = f"爆量流入：{', '.join([f'馬 {h}' for h in surge_horses])}"
-
+    # 6. 爆量偵測
+    surge_horses = [h for h, m in momentum.items() if m > threshold]
+    alert = f"爆量流入：{', '.join([f'馬 {h}' for h in surge_horses])}" if surge_horses else None
     # 5. 建表格
     table_data = []
     for h in momentum_current.keys():
@@ -825,31 +819,25 @@ def analyze_momentum(investment_dict, method='overall', threshold=0.3, window=3)
         })
     df_momentum = pd.DataFrame(table_data).sort_values('當前動量', ascending=False)
 
-    # 6. 繪圖
-    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 6), gridspec_kw={'height_ratios': [3, 1]})
-
-    # 熱圖
-    current_vals = [momentum_current.get(i, 0) for i in range(1, len(delta)+1)]
-    im = ax1.imshow([current_vals], cmap='Reds', aspect='auto', vmin=0, vmax=0.5)
-    ax1.set_xticks(range(len(current_vals)))
-    ax1.set_xticklabels([f"{i+1}" for i in range(len(current_vals))])
-    ax1.set_yticks([])
-    ax1.set_title(f"動量熱圖（{method}） - 最新更新")
-    plt.colorbar(im, ax=ax1, label='動量比例')
-
-    # 趨勢線
-    if momentum_history:
-        history_vals = [[m.get(i, 0) for m in momentum_history] for i in momentum_current.keys()]
-        for i, vals in enumerate(history_vals):
-            if any(v > 0 for v in vals):
-                ax2.plot(vals, label=f"馬 {i+1}", marker='o')
-        ax2.set_xlabel("歷史更新（由舊到新）")
-        ax2.set_ylabel("動量")
-        ax2.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
-    else:
-        ax2.text(0.5, 0.5, '無歷史資料', transform=ax2.transAxes, ha='center')
-
+    # 8. 繪製熱圖
+    fig, ax = plt.subplots(figsize=(10, 2))
+    values = [momentum.get(i, 0) for i in range(1, len(delta)+1)]
+    im = ax.imshow([values], cmap='Reds', aspect='auto', vmin=0, vmax=0.5)
+    ax.set_xticks(range(len(values)))
+    ax.set_xticklabels([f"{i}" for i in range(1, len(values)+1)])
+    ax.set_yticks([])
+    ax.set_title(f"即時動量熱圖（{method}）")
+    plt.colorbar(im, ax=ax, label='動量比例', shrink=0.8)
     plt.tight_layout()
+
+    # 9. 快取本次結果
+    if cache_key:
+        st.session_state[cache_key] = {
+            'df': df_momentum.copy(),
+            'fig': fig,
+            'alert': alert
+        }
+
     return df_momentum, alert, fig
   
 def print_ucb():
