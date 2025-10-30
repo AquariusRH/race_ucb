@@ -779,7 +779,8 @@ def analyze_momentum(investment_dict, method='overall', threshold=0.3, window=5,
     # 1. 快取初始化
     if cache_key and cache_key not in st.session_state:
         st.session_state[cache_key] = {'df': None, 'fig': None, 'alert': None}
-
+    if surge_count_key not in st.session_state:
+        st.session_state[surge_count_key] = {}  # {馬號: 次數}
     # 2. 防錯
     if method not in investment_dict:
         return _get_cached_or_empty(cache_key)
@@ -795,7 +796,7 @@ def analyze_momentum(investment_dict, method='overall', threshold=0.3, window=5,
     horses = list(range(1, len(win_odds) + 1))
     # 4. 無變動 → 回上一次
     if total_delta == 0:
-        return _get_cached_or_empty(cache_key)
+        return _get_cached_or_empty(cache_key,surge_count_key)
 
     # 5. 正規化當前動量
     momentum_current = {i+1: delta[i] / total_delta for i in range(len(delta))}
