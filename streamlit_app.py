@@ -662,16 +662,29 @@ def print_highlight():
           crosstab_1
 # 內部輔助函數
 def _get_cached_or_empty(cache_key, surge_count_key):
-    if cache_key in st.session_state:
-        cache = st.session_state[cache_key]
-        # 保留爆量次數
-        if 'df' in cache and not cache['df'].empty:
-            # 重新注入最新爆量次數
-            df = cache['df'].copy()
-            for h in df['馬號']:
-                df.loc[df['馬號'] == h, '爆量次數'] = st.session_state.get(surge_count_key, {}).get(h, 0)
-            return df, cache['alert'], cache['fig']
-    return pd.DataFrame(), None, None
+    """
+    安全回傳快取結果，若無則回空
+    """
+    # 1. 檢查 cache_key 是否存在
+    if cache_key not in st.session_state:
+        return pd.DataFrame(), None, None
+
+    cache = st.session_state[cache_key]
+
+    # 2. 檢查 cache 是否為 dict 且有 'df'
+    if not isinstance(cache, dict) or 'df' not in cache:
+        return pd.DataFrame(), None, None
+
+    # 3. 檢查 df 是否存在且非空
+    if cache['df'] is None or cache['df'].empty:
+        return pd.DataFrame(), None, None
+
+    # 4. 複製 df 並更新「爆量次數」
+    df = cache['df'].copy()
+    for h in df['馬號']:
+        df.loc[df['馬號'] == h, '爆量次數'] = st.session_state.get(surge_count_key, {}).get(h, 0)
+
+    return df, cache.get('alert'), cache.get('fig')
   
 def run_ucb_prediction(race_no, odds, investment_dict, ucb_dict, race_dict):
     """
