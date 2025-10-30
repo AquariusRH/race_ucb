@@ -701,7 +701,15 @@ def run_ucb_prediction(race_no, odds, investment_dict, ucb_dict, race_dict):
         total = delta.sum()
         if total > 0:
             momentum = {i+1: delta[i] / total for i in range(len(delta))}
-    
+
+    if not momentum:
+        latest_t = max(ucb_data['history'].keys()) if ucb_data['history'] else 0
+        if latest_t > 0:
+            return (
+                ucb_data['history'][latest_t].copy(),
+                ucb_data['top4_history'][latest_t].copy(),
+                latest_t  # t 不變
+            )
     # 5. UCB 計算
     ucb_values = {}
     for h in horses:
@@ -712,7 +720,7 @@ def run_ucb_prediction(race_no, odds, investment_dict, ucb_dict, race_dict):
           scr_indicator = 1
         n_i = max(ucb_state['selected_count'].get(h, 0), 1)
         exploration = 2.0 * np.sqrt(np.log(max(t, 1)) / n_i)
-        value_bonus = 1.0 / np.sqrt(win_odds[i])
+        value_bonus = 0.5 / np.sqrt(win_odds[i])
         avg_sel = np.mean(list(ucb_state['selected_count'].values()))
         #penalty = -0.4 * (ucb_state['selected_count'].get(h, 0) - avg_sel) ** 2
         
@@ -722,7 +730,7 @@ def run_ucb_prediction(race_no, odds, investment_dict, ucb_dict, race_dict):
             value_bonus #+                 # 價值
             #penalty                       # 懲罰
         ) * scr_indicator
-        
+    
     # 6. 選 Top 4
     top4 = sorted(ucb_values, key=ucb_values.get, reverse=True)[:4]
     for h in top4:
@@ -743,9 +751,9 @@ def run_ucb_prediction(race_no, odds, investment_dict, ucb_dict, race_dict):
         })
     df_ucb = pd.DataFrame(table_data).sort_values(['次數','UCB'], ascending=False)
     
-    # 8. 存入 history
-    #ucb_data['history'][t] = df_ucb.copy()
-    #ucb_data['top4_history'][t] = top4.copy()
+    8. 存入 history
+    ucb_data['history'][t] = df_ucb.copy()
+    ucb_data['top4_history'][t] = top4.copy()
     
     return df_ucb, top4,t
 
