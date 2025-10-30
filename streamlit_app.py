@@ -817,12 +817,16 @@ def analyze_momentum(investment_dict, method='overall', threshold=0.3, window=5,
         avg_momentum = {h: 0 for h in momentum_current}
 
     # 7. 爆量偵測（當前 > threshold 且 > 3x 平均）
-    surge_horses = [
-        h for h in momentum_current
-        if momentum_current[h] > threshold and momentum_current[h] > 3 * avg_momentum[h]
-    ]
-    alert = f"爆量流入：{', '.join([f'馬 {h}' for h in surge_horses])}" if surge_horses else None
+    surge_horses = []
+    for h in momentum_current:
+        curr = momentum_current[h]
+        avg = avg_momentum[h]
+        if curr > threshold and curr > 3 * avg:
+            surge_horses.append(h)
+            # 累積次數
+            st.session_state[surge_count_key][h] = st.session_state[surge_count_key].get(h, 0) + 1
 
+    alert = f"爆量流入：{', '.join([f'馬 {h}' for h in surge_horses])}" if surge_horses else None
     # 8. 建表格（含平均動量）
     table_data = []
     for h in momentum_current:
@@ -837,6 +841,7 @@ def analyze_momentum(investment_dict, method='overall', threshold=0.3, window=5,
             '當前動量': f"{curr:.3f}",
             '平均動量': f"{avg:.3f}",
             '倍數': f"{ratio:.1f}x",
+            '爆量次數': surge_count,,
             '狀態': '爆量' if h in surge_horses else '正常'
         })
     df_momentum = pd.DataFrame(table_data).sort_values('當前動量', ascending=False)
