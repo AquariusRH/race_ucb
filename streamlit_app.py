@@ -788,7 +788,7 @@ def analyze_momentum(
     race_dict,
     race_no,
     method='overall',
-    threshold=0.3,
+    threshold=0.1,
     window=5,
     cache_key='momentum_cache',
     surge_count_key='surge_count'
@@ -839,7 +839,7 @@ def analyze_momentum(
     avg_momentum = {}
     if momentum_history:
         for h in momentum_current:
-            vals = [10*m.get(h, 0) for m in momentum_history]
+            vals = [m.get(h, 0) for m in momentum_history]
             avg_momentum[h] = np.mean(vals)
     else:
         avg_momentum = {h: 0 for h in momentum_current}
