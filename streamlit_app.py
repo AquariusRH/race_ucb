@@ -788,7 +788,7 @@ def analyze_momentum(
     race_dict,
     race_no,
     method='overall',
-    threshold=0.01,
+    threshold=0.1,
     window=5,
     cache_key='momentum_cache',
     surge_count_key='surge_count'
@@ -860,7 +860,7 @@ def analyze_momentum(
     for i, h in enumerate(horses):
         curr = momentum_current.get(h, 0)
         avg = avg_momentum.get(h, 0)
-        ratio = curr / max(avg, 1e-6)
+        ratio = curr / max(avg, 1e-3)
         surge_count = st.session_state[surge_count_key].get(h, 0)
         odds_display = f"{win_odds[i]:.2f}" if win_odds[i] < 999 else "SCR"
 
@@ -925,7 +925,7 @@ def print_momentum():
                 race_dict=race_dict,
                 race_no=race_no,
                 method='overall',
-                threshold=0.01,
+                threshold=0.1,
                 window=5,
                 cache_key='momentum_cache',
                 surge_count_key='surge_count'
