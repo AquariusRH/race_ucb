@@ -814,6 +814,9 @@ def analyze_momentum(investment_dict, method='overall', threshold=0.3, window=3)
     for h in momentum_current.keys():
         table_data.append({
             '馬號': h,
+            '馬名': race_dict[race_no]['馬名'][h-1],
+            '騎師': race_dict[race_no]['騎師'][h-1],
+            '賠率': f"{win_odds[h-1]:.2f}",
             '當前動量': f"{momentum_current[h]:.3f}",
             '平均動量': f"{avg_momentum[h]:.3f}",
             '倍數': f"{momentum_current[h]/max(avg_momentum[h], 1e-6):.1f}x",
