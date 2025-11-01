@@ -14,7 +14,7 @@ from warnings import simplefilter
 simplefilter(action="ignore", category=pd.errors.PerformanceWarning)
 # Show the page title and description.
 st.set_page_config(page_title="Jockey Race")
-st.title("Jockey Race 賽馬程式")
+st.title("Jockey Race 賽馬程式 (動量)")
 
 # @title 2. {func} 下載數據
 # @title 處理數據
