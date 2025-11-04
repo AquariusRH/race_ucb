@@ -836,7 +836,7 @@ def analyze_momentum(
         st.session_state[cache_key] = {'df': None, 'fig': None, 'alert': None}
 
     # 2. 防錯
-    if method not in investment_dict or 'WIN' not in odds or race_no not inrace_dict:
+    if method not in investment_dict or 'WIN' not in odds or race_no not in race_dict:
         return _get_cached_or_empty(cache_key, surge_count_key)
     df = investment_dict[method]
     if len(df) < 2:
