@@ -730,9 +730,9 @@ def run_ucb_prediction(race_no, odds, investment_dict, ucb_dict, race_dict):
     """
     # 1. 防錯
     if race_no not in ucb_dict:
-        return pd.DataFrame(), []
+        return pd.DataFrame(), [],0
     if 'WIN' not in odds or not odds['WIN']:
-        return pd.DataFrame(), []
+        return pd.DataFrame(), [],0
     
     # 2. 取得狀態
     ucb_data = ucb_dict[race_no]
