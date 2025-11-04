@@ -1009,6 +1009,7 @@ with infoColumns[2]:
 # --- 投注方式選擇 ---
 available_methods = ['WIN', 'PLA', 'QIN', 'QPL', 'FCT', 'TRI', 'FF']
 available_methods_ch = ['獨贏', '位置', '連贏', '位置Q', '二重彩', '單T', '四連環']
+default_checked_methods = ['WIN','QIN']
 method_columns = st.columns(len(available_methods))
 selected_methods = []
 for idx, (method, method_ch) in enumerate(zip(available_methods, available_methods_ch)):
