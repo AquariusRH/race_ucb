@@ -1308,13 +1308,13 @@ if st.session_state.reset:
     st.session_state.diff_dict.setdefault('overall', pd.DataFrame())
 
     # 初始化 ubc_dict
-    if 'ubc_dict' not in st.session_state:
+    if 'ucb_dict' not in st.session_state:
         st.session_state.ubc_dict = {}
 
     for race_number in st.session_state.race_dict:
-        if race_number not in st.session_state.ubc_dict:
+        if race_number not in st.session_state.ucb_dict:
             n_horses = len(st.session_state.race_dict[race_number]['馬名'])
-            st.session_state.ubc_dict[race_number] = {
+            st.session_state.ucb_dict[race_number] = {
                 'state': {'t': 0, 'selected_count': {i+1: 0 for i in range(n_horses)}},
                 'history': {},
                 'top4_history': {}
@@ -1331,13 +1331,6 @@ if st.session_state.reset:
             odds = get_odds_data()
             investments = get_investment_data()
             main(time_now, odds, investments, period=2)
-
-            # 每 5 分鐘儲存
-            if 'last_save_time' not in st.session_state:
-                st.session_state.last_save_time = time.time()
-            if time.time() - st.session_state.last_save_time > 300:  # 5 分鐘
-                save_state()
-                st.session_state.last_save_time = time.time()
 
             time.sleep(15)
            
