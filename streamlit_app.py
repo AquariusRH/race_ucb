@@ -1262,7 +1262,7 @@ if not st.session_state.api_called:
         st.session_state.race_dataframes = race_dataframes
         st.session_state.api_called = True
         st.success("賽事資料載入完成！")
-    else:
+  else:
         st.error("API 呼叫失敗")
 
 # --- 顯示資料 ---
