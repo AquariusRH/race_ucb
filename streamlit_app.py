@@ -689,28 +689,16 @@ def print_highlight():
           crosstab_1
 # 內部輔助函數
 def _get_cached_or_empty(cache_key, surge_count_key):
-    """
-    安全回傳快取結果，若無則回空
-    """
-    # 1. 檢查 cache_key 是否存在
     if cache_key not in st.session_state:
         return pd.DataFrame(), None, None
-
     cache = st.session_state[cache_key]
-
-    # 2. 檢查 cache 是否為 dict 且有 'df'
     if not isinstance(cache, dict) or 'df' not in cache:
         return pd.DataFrame(), None, None
-
-    # 3. 檢查 df 是否存在且非空
     if cache['df'] is None or cache['df'].empty:
         return pd.DataFrame(), None, None
-
-    # 4. 複製 df 並更新「爆量次數」
     df = cache['df'].copy()
     for h in df['馬號']:
         df.loc[df['馬號'] == h, '爆量次數'] = st.session_state.get(surge_count_key, {}).get(h, 0)
-
     return df, cache.get('alert'), cache.get('fig')
   
 def run_ucb_prediction(race_no, odds, investment_dict, ucb_dict, race_dict):
@@ -816,38 +804,29 @@ def analyze_momentum(
     race_no,
     method='overall',
     threshold=0.1,
-    window=5,
-    cache_key='momentum_cache',
-    surge_count_key='surge_count'
+    window=5
 ):
-    """
-    動量分析 + 完整馬匹資訊 + 爆量次數累積
+# 1. 場次專屬 key
+    cache_key = f'momentum_cache_{race_no}'
+    surge_count_key = f'surge_count_{race_no}'
 
-    Args:
-        odds (dict): 包含 'WIN' 的賠率
-        race_dict (dict): 馬匹資料
-        race_no (int): 當前場次
-        ...其他參數
-    """
-    # 1. 初始化
+    # 2. 初始化
     if surge_count_key not in st.session_state:
         st.session_state[surge_count_key] = {}
     if cache_key not in st.session_state:
         st.session_state[cache_key] = {'df': None, 'fig': None, 'alert': None}
 
-    # 2. 防錯
-    if method not in investment_dict or 'WIN' not in odds or race_no not in race_dict:
-        return _get_cached_or_empty(cache_key, surge_count_key)
-    df = investment_dict[method]
-    if len(df) < 2:
+    # 3. 防錯
+    if (method not in investment_dict or 'WIN' not in odds or
+        race_no not in race_dict or len(investment_dict[method]) < 2):
         return _get_cached_or_empty(cache_key, surge_count_key)
 
-    # 3. 賠率處理
+    df = investment_dict[method]
     win_odds_raw = odds['WIN']
     win_odds = np.array([o if o != np.inf else 999 for o in win_odds_raw])
     horses = list(range(1, len(win_odds) + 1))
 
-    # 4. 計算當前動量
+    # 4. 當前動量
     delta = np.maximum(df.iloc[-1].values - df.iloc[-2].values, 0)
     total_delta = delta.sum()
     if total_delta == 0:
@@ -871,7 +850,7 @@ def analyze_momentum(
     else:
         avg_momentum = {h: 0 for h in momentum_current}
 
-    # 6. 爆量偵測 + 累積
+    # 6. 爆量偵測 + 累積（場次專屬）
     surge_horses = []
     for h in momentum_current:
         curr = momentum_current[h]
@@ -882,12 +861,12 @@ def analyze_momentum(
 
     alert = f"爆量流入：{', '.join([f'馬 {h}' for h in surge_horses])}" if surge_horses else None
 
-    # 7. 建完整表格
+    # 7. 建表
     table_data = []
     for i, h in enumerate(horses):
         curr = momentum_current.get(h, 0)
         avg = avg_momentum.get(h, 0)
-        ratio = curr / max(avg, 1e-3)
+        ratio = curr / max(avg, 1e-6)
         surge_count = st.session_state[surge_count_key].get(h, 0)
         odds_display = f"{win_odds[i]:.2f}" if win_odds[i] < 999 else "SCR"
 
@@ -916,7 +895,7 @@ def analyze_momentum(
     plt.colorbar(im, ax=ax, label='動量比例', shrink=0.8)
     plt.tight_layout()
 
-    # 9. 快取
+    # 9. 快取（場次專屬）
     st.session_state[cache_key] = {
         'df': df_momentum.copy(),
         'fig': fig,
@@ -953,9 +932,7 @@ def print_momentum():
                 race_no=race_no,
                 method='overall',
                 threshold=0.1,
-                window=5,
-                cache_key='momentum_cache',
-                surge_count_key='surge_count'
+                window=5
             )
             
             if alert:
