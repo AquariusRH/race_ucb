@@ -1232,26 +1232,26 @@ if not st.session_state.api_called:
                 race_number = race["no"]
                 post_time = race.get("postTime", "")
                 time_part = datetime.fromisoformat(post_time) if post_time else None
-                st.session_state.post_time_dict[race_number] = time_part
-                st.session_state.race_dict[race_number] = {"馬名": [], "騎師": [], "練馬師": [], "最近賽績": []}
+                post_time_dict[race_number] = time_part
+                race_dict[race_number] = {"馬名": [], "騎師": [], "練馬師": [], "最近賽績": []}
                 for runner in race.get('runners', []):
                     if runner.get('standbyNo') == "":
                         name_ch = runner.get('name_ch', '')
                         jockey_name_ch = runner.get('jockey', {}).get('name_ch', '')
                         trainer_name_ch = runner.get('trainer', {}).get('name_ch', '')
                         last6run = runner.get('last6run', '')
-                        st.session_state.race_dict[race_number]["馬名"].append(name_ch)
-                        st.session_state.race_dict[race_number]["騎師"].append(jockey_name_ch)
-                        st.session_state.race_dict[race_number]["練馬師"].append(trainer_name_ch)
-                        st.session_state.race_dict[race_number]["最近賽績"].append(last6run)
+                        race_dict[race_number]["馬名"].append(name_ch)
+                        race_dict[race_number]["騎師"].append(jockey_name_ch)
+                        race_dict[race_number]["練馬師"].append(trainer_name_ch)
+                        race_dict[race_number]["最近賽績"].append(last6run)
 
         # 建立 race_dataframes
         race_dataframes = {}
         numbered_dict = {}
-        for race_number in st.session_state.race_dict:
-            df = pd.DataFrame(st.session_state.race_dict[race_number])
+        for race_number in race_dict:
+            df = pd.DataFrame(race_dict[race_number])
             df.index += 1
-            numbered_list = [f"{i+1}. {name}" for i, name in enumerate(st.session_state.race_dict[race_number]['馬名'])]
+            numbered_list = [f"{i+1}. {name}" for i, name in enumerate(race_dict[race_number]['馬名'])]
             numbered_dict[race_number] = numbered_list
             race_dataframes[race_number] = df
 
