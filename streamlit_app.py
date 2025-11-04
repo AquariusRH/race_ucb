@@ -8,6 +8,9 @@ import pytz
 import time
 import matplotlib.pyplot as plt
 import matplotlib
+import json
+import os
+
 matplotlib.font_manager.fontManager.addfont('TaipeiSansTCBeta-Regular.ttf')
 matplotlib.rc('font', family='Taipei Sans TC Beta')
 from warnings import simplefilter
@@ -15,7 +18,47 @@ simplefilter(action="ignore", category=pd.errors.PerformanceWarning)
 # Show the page title and description.
 st.set_page_config(page_title="Jockey Race")
 st.title("Jockey Race 賽馬程式 (動量)")
+# ==================== 永久儲存模組 ====================
 
+DATA_FILE = "race_data.json"
+
+def save_state():
+    """儲存所有關鍵資料"""
+    data = {
+        'odds_dict': {k: v.to_dict('records') for k, v in st.session_state.odds_dict.items()},
+        'investment_dict': {k: v.to_dict('records') for k, v in st.session_state.investment_dict.items()},
+        'overall_investment_dict': {k: v.to_dict('records') for k, v in st.session_state.overall_investment_dict.items()},
+        'weird_dict': {k: v.to_dict('records') for k, v in st.session_state.weird_dict.items()},
+        'diff_dict': {k: v.to_dict('records') for k, v in st.session_state.diff_dict.items()},
+        'race_dict': st.session_state.race_dict,
+        'post_time_dict': st.session_state.post_time_dict,
+        'numbered_dict': st.session_state.numbered_dict,
+        'race_dataframes': {k: v.to_dict('records') for k, v in st.session_state.race_dataframes.items()},
+        'ubc_dict': st.session_state.ubc_dict,
+        'last_save': str(datetime.now())
+    }
+    with open(DATA_FILE, 'w') as f:
+        json.dump(data, f)
+
+def load_state():
+    """載入所有關鍵資料"""
+    if os.path.exists(DATA_FILE):
+        with open(DATA_FILE, 'r') as f:
+            data = json.load(f)
+        st.session_state.odds_dict = {k: pd.DataFrame(v) for k, v in data.get('odds_dict', {}).items()}
+        st.session_state.investment_dict = {k: pd.DataFrame(v) for k, v in data.get('investment_dict', {}).items()}
+        st.session_state.overall_investment_dict = {k: pd.DataFrame(v) for k, v in data.get('overall_investment_dict', {}).items()}
+        st.session_state.weird_dict = {k: pd.DataFrame(v, columns=['No.', 'error', 'odds', 'Highlight']) for k, v in data.get('weird_dict', {}).items()}
+        st.session_state.diff_dict = {k: pd.DataFrame(v) for k, v in data.get('diff_dict', {}).items()}
+        st.session_state.race_dict = data.get('race_dict', {})
+        st.session_state.post_time_dict = data.get('post_time_dict', {})
+        st.session_state.numbered_dict = data.get('numbered_dict', {})
+        st.session_state.race_dataframes = {k: pd.DataFrame(v) for k, v in data.get('race_dataframes', {}).items()}
+        st.session_state.ubc_dict = data.get('ubc_dict', {})
+        st.success("資料已載入！")
+
+# ==================== 載入歷史資料 ====================
+load_state()
 # @title 2. {func} 下載數據
 # @title 處理數據
 def get_investment_data():
@@ -952,7 +995,7 @@ def main(time_now,odds,investments,period):
   print_top()
   print_ucb()
   print_momentum()
-# Display the date picker widget
+# --- 輸入 ---
 infoColumns = st.columns(3)
 with infoColumns[0]:
     Date = st.date_input('日期:', value=datetime.now())
@@ -963,52 +1006,22 @@ with infoColumns[2]:
     race_options = np.arange(1, 12)
     race_no = st.selectbox('場次:', race_options)
 
-# Initialize lists (using list2 and list2_ch as default; change to list1 and list1_ch if preferred)
+# --- 投注方式選擇 ---
 available_methods = ['WIN', 'PLA', 'QIN', 'QPL', 'FCT', 'TRI', 'FF']
 available_methods_ch = ['獨贏', '位置', '連贏', '位置Q', '二重彩', '單T', '四連環']
-print_list_default = ['WIN','PLA','QIN','QPL','FCT', 'TRI', 'FF']
-top_list_default = ['QIN','QPL','WIN','PLA','FCT', 'TRI', 'FF']
-default_checked_methods = ['WIN','QIN']
-# Initialize session state variables
-if 'reset' not in st.session_state:
-    st.session_state.reset = False
-if 'api_called' not in st.session_state:
-    st.session_state.api_called = False
-
-# Create individual checkboxes for each betting method
-st.write("選擇投注方式 (Select Betting Methods):")
-num_methods = len(available_methods)
-method_columns = st.columns(num_methods)  # Create one column per method
+method_columns = st.columns(len(available_methods))
 selected_methods = []
 for idx, (method, method_ch) in enumerate(zip(available_methods, available_methods_ch)):
-  with method_columns[idx]:
-    is_default_checked = method in default_checked_methods
-    if st.checkbox(method_ch, value=is_default_checked, key=method):
-        selected_methods.append(method)
-# Update methodlist and methodCHlist based on selections
+    with method_columns[idx]:
+        if st.checkbox(method_ch, value=method in default_checked_methods):
+            selected_methods.append(method)
+
 methodlist = selected_methods
-
 methodCHlist = [available_methods_ch[available_methods.index(method)] for method in selected_methods]
+print_list = [item for item in print_list_default if item in selected_methods]
+top_list = [item for item in top_list_default if item in selected_methods]
 
-# Update print_list based on selections (only include selected methods that are in the default print_list)
-print_list = [item for item in print_list_default if item in selected_methods ]
-top_list = [item for item in top_list_default if item in selected_methods ]
-# Save changes to race_no (assuming race_no is defined elsewhere)
-race_no_value = race_no if 'race_no' in globals() else None
-
-# Example benchmark dictionary (assuming these variables are defined elsewhere)
-benchmark_dict = {
-    "WIN": benchmark_win if 'benchmark_win' in globals() else None,
-    "PLA": benchmark_pla if 'benchmark_pla' in globals() else None,
-    "QIN": benchmark_qin if 'benchmark_qin' in globals() else None,
-    "QPL": benchmark_qpl if 'benchmark_qpl' in globals() else None
-}
-
-# Define the button callback
-def click_start_button():
-    st.session_state.reset = True
-
-# Add a button to trigger an action
+# --- 開始按鈕 ---
 if st.button("開始", on_click=click_start_button):
     st.write(f"Selected methods: {methodlist}")
     st.write(f"Chinese labels: {methodCHlist}")
@@ -1258,56 +1271,70 @@ if not st.session_state.api_called:
       numbered_list = [f"{i+1}. {name}" for i, name in enumerate(race_dict[race_number]['馬名'])]
       numbered_dict[race_number] = numbered_list
       race_dataframes[race_number] = df
-  
+  st.session_state.api_called = True
+  save_state()
+
 top_container = st.container()
 placeholder = st.empty()
 ucb_placeholder= st.container()
-if 'ucb_dict' not in st.session_state:
-        st.session_state.ucb_dict = {}
-if st.session_state.get('reset', False):
+if st.session_state.reset:
     with top_container:
-      st.write(f"DataFrame for Race No: {race_no}")
-      st.dataframe(race_dataframes[race_no], use_container_width=True)
-    odds_dict = {}
-    for method in methodlist:
-        odds_dict[method] = pd.DataFrame()
-    investment_dict = {}
-    for method in methodlist:
-        investment_dict[method] = pd.DataFrame()
-    overall_investment_dict = {}
-    for method in methodlist:
-        overall_investment_dict.setdefault(method, pd.DataFrame())
-    overall_investment_dict.setdefault('overall', pd.DataFrame())
-    weird_dict = {}
-    for method in methodlist:
-        weird_dict.setdefault(method, pd.DataFrame([], columns=['No.', 'error', 'odds', 'Highlight']))
-    diff_dict = {}
-    for method in methodlist:
-        diff_dict.setdefault(method, pd.DataFrame())
-    diff_dict.setdefault('overall', pd.DataFrame())
-    st.session_state.reset = True
+        st.write(f"DataFrame for Race No: {race_no}")
+        st.dataframe(st.session_state.race_dataframes[race_no], use_container_width=True)
 
-    if race_no not in st.session_state.ucb_dict:
-      n_horses = len(race_dict[race_no]['馬名'])
-      st.session_state.ucb_dict[race_no] = {
-        'state': {
-            't': 0,
-            'selected_count': {i+1: 0 for i in range(n_horses)}
-        },
-        'history': {},        # {t: df_ucb}
-        'top4_history': {}    # {t: [top4]}
-      }
+    # 初始化 session_state 資料
+    st.session_state.odds_dict = {}
+    for method in methodlist:
+        st.session_state.odds_dict[method] = pd.DataFrame()
+
+    st.session_state.investment_dict = {}
+    for method in methodlist:
+        st.session_state.investment_dict[method] = pd.DataFrame()
+
+    st.session_state.overall_investment_dict = {}
+    for method in methodlist:
+        st.session_state.overall_investment_dict.setdefault(method, pd.DataFrame())
+    st.session_state.overall_investment_dict.setdefault('overall', pd.DataFrame())
+
+    st.session_state.weird_dict = {}
+    for method in methodlist:
+        st.session_state.weird_dict.setdefault(method, pd.DataFrame([], columns=['No.', 'error', 'odds', 'Highlight']))
+
+    st.session_state.diff_dict = {}
+    for method in methodlist:
+        st.session_state.diff_dict.setdefault(method, pd.DataFrame())
+    st.session_state.diff_dict.setdefault('overall', pd.DataFrame())
+
+    # 初始化 ubc_dict
+    if 'ubc_dict' not in st.session_state:
+        st.session_state.ubc_dict = {}
+
+    for race_number in st.session_state.race_dict:
+        if race_number not in st.session_state.ubc_dict:
+            n_horses = len(st.session_state.race_dict[race_number]['馬名'])
+            st.session_state.ubc_dict[race_number] = {
+                'state': {'t': 0, 'selected_count': {i+1: 0 for i in range(n_horses)}},
+                'history': {},
+                'top4_history': {}
+            }
+
+    # 開始監測
     start_time = time.time()
     end_time = start_time + 60*10000
-    
-    while time.time()<=end_time:
+
+    while time.time() <= end_time:
         with placeholder.container():
             time_now = datetime.now() + datere.relativedelta(hours=8)
             odds = get_odds_data()
             investments = get_investment_data()
-
-            # --- 你的原始分析 ---
             main(time_now, odds, investments, period=2)
+
+            # 每 5 分鐘儲存
+            if 'last_save_time' not in st.session_state:
+                st.session_state.last_save_time = time.time()
+            if time.time() - st.session_state.last_save_time > 300:  # 5 分鐘
+                save_state()
+                st.session_state.last_save_time = time.time()
 
             time.sleep(15)
            
