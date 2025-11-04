@@ -1254,7 +1254,7 @@ if not st.session_state.api_called:
             numbered_list = [f"{i+1}. {name}" for i, name in enumerate(race_dict[race_number]['馬名'])]
             numbered_dict[race_number] = numbered_list
             race_dataframes[race_number] = df
-
+        st.write(race_dict)
         # 存入 session_state
         st.session_state.race_dict = race_dict
         st.session_state.post_time_dict = post_time_dict
@@ -1321,7 +1321,7 @@ if st.session_state.reset:
 
     while time.time() <= end_time:
         with placeholder.container():
-            st.write(st.session_state.race_dict)
+            
             time_now = datetime.now() + datere.relativedelta(hours=8)
             odds = get_odds_data()
             investments = get_investment_data()
