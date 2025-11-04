@@ -968,6 +968,8 @@ def print_momentum():
             
             if fig:
                 st.pyplot(fig)
+            else:
+                st.write('Nothing')
               
 def main(time_now,odds,investments,period):
   save_odds_data(time_now,odds)
