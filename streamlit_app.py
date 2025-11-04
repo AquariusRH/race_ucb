@@ -1268,7 +1268,13 @@ st.session_state.post_time_dict = post_time_dict
 st.session_state.numbered_dict = numbered_dict
 st.session_state.race_dataframes = race_dataframes  # 關鍵！
 st.session_state.api_called = True
-  
+# --- 顯示資料 ---
+if st.session_state.api_called and race_no in st.session_state.race_dataframes:
+    with top_container:
+        st.write(f"第 {race_no} 場 賽事資料")
+        st.dataframe(st.session_state.race_dataframes[race_no], use_container_width=True)
+else:
+    st.info("請先點「開始」載入賽事資料")  
 
 top_container = st.container()
 placeholder = st.empty()
