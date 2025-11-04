@@ -746,8 +746,8 @@ def run_ucb_prediction(race_no, odds, investment_dict, ucb_dict, race_dict):
     
     # 4. 動量（投注增量）
     momentum = {}
-    if 'WIN' in st.session_state.investment_dict and len(st.session_state.investment_dict['overall']) >= 2:
-        df = st.session_state.investment_dict['overall']
+    if 'WIN' in investment_dict and len(investment_dict['overall']) >= 2:
+        df = investment_dict['overall']
         delta = df.iloc[-1] - df.iloc[-2]
         delta = np.maximum(delta.values, 0)
         total = delta.sum()
@@ -793,8 +793,8 @@ def run_ucb_prediction(race_no, odds, investment_dict, ucb_dict, race_dict):
     for i, h in enumerate(horses):
         table_data.append({
             '馬號': h,
-            '馬名': st.session_state.race_dict[race_no]['馬名'][i],
-            '騎師': st.session_state.race_dict[race_no]['騎師'][i],
+            '馬名': race_dict[race_no]['馬名'][i],
+            '騎師': race_dict[race_no]['騎師'][i],
             '賠率': f"{win_odds[i]:.2f}",
             '動量': f"{momentum.get(h, 0):.3f}",
             'UCB': f"{ucb_values.get(h, 0):.3f}",
