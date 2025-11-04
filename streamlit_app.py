@@ -22,43 +22,27 @@ st.title("Jockey Race 賽馬程式 (動量)")
 
 DATA_FILE = "race_data.json"
 
-def save_state():
-    """儲存所有關鍵資料"""
-    data = {
-        'odds_dict': {k: v.to_dict('records') for k, v in st.session_state.odds_dict.items()},
-        'investment_dict': {k: v.to_dict('records') for k, v in st.session_state.investment_dict.items()},
-        'overall_investment_dict': {k: v.to_dict('records') for k, v in st.session_state.overall_investment_dict.items()},
-        'weird_dict': {k: v.to_dict('records') for k, v in st.session_state.weird_dict.items()},
-        'diff_dict': {k: v.to_dict('records') for k, v in st.session_state.diff_dict.items()},
-        'race_dict': st.session_state.race_dict,
-        'post_time_dict': st.session_state.post_time_dict,
-        'numbered_dict': st.session_state.numbered_dict,
-        'race_dataframes': {k: v.to_dict('records') for k, v in st.session_state.race_dataframes.items()},
-        'ubc_dict': st.session_state.ubc_dict,
-        'last_save': str(datetime.now())
+def init_session_state():
+    defaults = {
+        'api_called': False,
+        'reset': False,
+        'odds_dict': {},
+        'investment_dict': {},
+        'overall_investment_dict': {},
+        'weird_dict': {},
+        'diff_dict': {},
+        'race_dict': {},
+        'post_time_dict': {},
+        'numbered_dict': {},
+        'race_dataframes': {},
+        'ubc_dict': {},
+        'last_save_time': 0
     }
-    with open(DATA_FILE, 'w') as f:
-        json.dump(data, f)
+    for key, value in defaults.items():
+        if key not in st.session_state:
+            st.session_state[key] = value
 
-def load_state():
-    """載入所有關鍵資料"""
-    if os.path.exists(DATA_FILE):
-        with open(DATA_FILE, 'r') as f:
-            data = json.load(f)
-        st.session_state.odds_dict = {k: pd.DataFrame(v) for k, v in data.get('odds_dict', {}).items()}
-        st.session_state.investment_dict = {k: pd.DataFrame(v) for k, v in data.get('investment_dict', {}).items()}
-        st.session_state.overall_investment_dict = {k: pd.DataFrame(v) for k, v in data.get('overall_investment_dict', {}).items()}
-        st.session_state.weird_dict = {k: pd.DataFrame(v, columns=['No.', 'error', 'odds', 'Highlight']) for k, v in data.get('weird_dict', {}).items()}
-        st.session_state.diff_dict = {k: pd.DataFrame(v) for k, v in data.get('diff_dict', {}).items()}
-        st.session_state.race_dict = data.get('race_dict', {})
-        st.session_state.post_time_dict = data.get('post_time_dict', {})
-        st.session_state.numbered_dict = data.get('numbered_dict', {})
-        st.session_state.race_dataframes = {k: pd.DataFrame(v) for k, v in data.get('race_dataframes', {}).items()}
-        st.session_state.ubc_dict = data.get('ubc_dict', {})
-        st.success("資料已載入！")
-
-# ==================== 載入歷史資料 ====================
-load_state()
+init_session_state()
 # @title 2. {func} 下載數據
 # @title 處理數據
 def get_investment_data():
