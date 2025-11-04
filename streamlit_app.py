@@ -836,9 +836,9 @@ def analyze_momentum(
         st.session_state[cache_key] = {'df': None, 'fig': None, 'alert': None}
 
     # 2. 防錯
-    if method not in st.session_state.investment_dict or 'WIN' not in odds or race_no not in st.session_state.race_dict:
+    if method not in investment_dict or 'WIN' not in odds or race_no not inrace_dict:
         return _get_cached_or_empty(cache_key, surge_count_key)
-    df = st.session_state.investment_dict[method]
+    df = investment_dict[method]
     if len(df) < 2:
         return _get_cached_or_empty(cache_key, surge_count_key)
 
@@ -893,8 +893,8 @@ def analyze_momentum(
 
         table_data.append({
             '馬號': h,
-            '馬名': st.session_state.race_dict[race_no]['馬名'][i],
-            '騎師': st.session_state.race_dict[race_no]['騎師'][i],
+            '馬名': race_dict[race_no]['馬名'][i],
+            '騎師': race_dict[race_no]['騎師'][i],
             '賠率': odds_display,
             '當前動量': f"{curr:.3f}",
             '平均動量': f"{avg:.3f}",
