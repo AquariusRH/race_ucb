@@ -1218,8 +1218,8 @@ if not st.session_state.api_called:
   }
 
   # Make a POST request to the API
-    response = requests.post(url, json=payload)
-    if response.status_code == 200:
+  response = requests.post(url, json=payload)
+  if response.status_code == 200:
         data = response.json()
         race_meetings = data.get('data', {}).get('raceMeetings', [])
         race_dict = {}
