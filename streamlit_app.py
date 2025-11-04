@@ -28,7 +28,7 @@ def init_session_state():
         'reset': False,
         'odds_dict': {},
         'investment_dict': {},
-        'st.session_state.overall_investment_dict': {},
+        'overall_investment_dict': {},
         'weird_dict': {},
         'diff_dict': {},
         'race_dict': {},
