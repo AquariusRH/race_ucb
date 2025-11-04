@@ -28,7 +28,7 @@ def init_session_state():
         'reset': False,
         'odds_dict': {},
         'investment_dict': {},
-        'overall_st.session_state.investment_dict': {},
+        'st.session_state.overall_investment_dict': {},
         'weird_dict': {},
         'diff_dict': {},
         'race_dict': {},
@@ -303,10 +303,10 @@ def get_overall_investment(time_now,dict):
     total_investment_df = pd.DataFrame(index =[time_now], columns=np.arange(1,no_of_horse +1))
     for method in methodlist:
       if method in ['WIN','PLA']:
-        overall_st.session_state.investment_dict[method] = overall_st.session_state.investment_dict[method]._append(st.session_state.investment_dict[method].tail(1))
+        st.session_state.overall_investment_dict[method] = st.session_state.overall_investment_dict[method]._append(st.session_state.investment_dict[method].tail(1))
       elif method in ['QIN','QPL']:
         if not investment_df[method].empty:
-          overall_st.session_state.investment_dict[method] = overall_st.session_state.investment_dict[method]._append(investment_combined(time_now,method,st.session_state.investment_dict[method].tail(1)))
+          st.session_state.overall_investment_dict[method] = st.session_state.overall_investment_dict[method]._append(investment_combined(time_now,method,st.session_state.investment_dict[method].tail(1)))
         else:
           continue
 
@@ -314,15 +314,15 @@ def get_overall_investment(time_now,dict):
         total_investment = 0
         for method in methodlist:
             if method in ['WIN', 'PLA']:
-                investment = overall_st.session_state.investment_dict[method][horse].values[-1]
+                investment = st.session_state.overall_investment_dict[method][horse].values[-1]
             elif method in ['QIN','QPL']:
               if not investment_df[method].empty: 
-                investment = overall_st.session_state.investment_dict[method][horse].values[-1]
+                investment = st.session_state.overall_investment_dict[method][horse].values[-1]
               else:
                 continue
             total_investment += investment
         total_investment_df[horse] = total_investment
-    overall_st.session_state.investment_dict['overall'] = overall_st.session_state.investment_dict['overall']._append(total_investment_df)
+    st.session_state.overall_investment_dict['overall'] = st.session_state.overall_investment_dict['overall']._append(total_investment_df)
 
 def print_bar_chart(time_now):
   post_time = post_time_dict[race_no]
@@ -333,10 +333,10 @@ def print_bar_chart(time_now):
       odds_list = pd.DataFrame()
       df = pd.DataFrame()
       if method == 'overall':
-          df = overall_st.session_state.investment_dict[method]
+          df = st.session_state.overall_investment_dict[method]
           change_data = st.session_state.diff_dict[method].iloc[-1]
       elif method in methodlist:
-          df = overall_st.session_state.investment_dict[method]
+          df = st.session_state.overall_investment_dict[method]
           change_data = st.session_state.diff_dict[method].tail(10).sum(axis = 0)
           odds_list = st.session_state.odds_dict[method]
       if df.empty:
