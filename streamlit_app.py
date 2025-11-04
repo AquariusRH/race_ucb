@@ -1005,7 +1005,10 @@ with infoColumns[1]:
 with infoColumns[2]:
     race_options = np.arange(1, 12)
     race_no = st.selectbox('場次:', race_options)
-
+if 'reset' not in st.session_state:
+    st.session_state.reset = False
+if 'api_called' not in st.session_state:
+    st.session_state.api_called = False
 # --- 投注方式選擇 ---
 available_methods = ['WIN', 'PLA', 'QIN', 'QPL', 'FCT', 'TRI', 'FF']
 available_methods_ch = ['獨贏', '位置', '連贏', '位置Q', '二重彩', '單T', '四連環']
@@ -1023,6 +1026,9 @@ methodlist = selected_methods
 methodCHlist = [available_methods_ch[available_methods.index(method)] for method in selected_methods]
 print_list = [item for item in print_list_default if item in selected_methods]
 top_list = [item for item in top_list_default if item in selected_methods]
+# Define the button callback
+def click_start_button():
+    st.session_state.reset = True
 
 # --- 開始按鈕 ---
 if st.button("開始", on_click=click_start_button):
