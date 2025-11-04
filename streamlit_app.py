@@ -28,7 +28,7 @@ def init_session_state():
         'reset': False,
         'odds_dict': {},
         'investment_dict': {},
-        'overall_investment_dict': {},
+        'overall_st.session_state.investment_dict': {},
         'weird_dict': {},
         'diff_dict': {},
         'race_dict': {},
@@ -227,39 +227,39 @@ def get_odds_data():
 def save_odds_data(time_now,odds):
   for method in methodlist:
       if method in ['WIN', 'PLA']:
-        if odds_dict[method].empty:
+        if st.session_state.odds_dict[method].empty:
             # Initialize the DataFrame with the correct number of columns
-            odds_dict[method] = pd.DataFrame(columns=np.arange(1, len(odds[method]) + 1))
-        odds_dict[method].loc[time_now] = odds[method]
+            st.session_state.odds_dict[method] = pd.DataFrame(columns=np.arange(1, len(odds[method]) + 1))
+        st.session_state.odds_dict[method].loc[time_now] = odds[method]
       elif method in ['QIN','QPL',"FCT","TRI","FF"]:
         if odds[method]:
           combination, odds_array = zip(*odds[method])
-          if odds_dict[method].empty:
-            odds_dict[method] = pd.DataFrame(columns=combination)
+          if st.session_state.odds_dict[method].empty:
+            st.session_state.odds_dict[method] = pd.DataFrame(columns=combination)
             # Set the values with the specified index
-          odds_dict[method].loc[time_now] = odds_array
-  #st.write(odds_dict)
+          st.session_state.odds_dict[method].loc[time_now] = odds_array
+  #st.write(st.session_state.odds_dict)
 
 def save_investment_data(time_now,investment,odds):
   for method in methodlist:
       if method in ['WIN', 'PLA']:
-        if investment_dict[method].empty:
+        if st.session_state.investment_dict[method].empty:
             # Initialize the DataFrame with the correct number of columns
-            investment_dict[method] = pd.DataFrame(columns=np.arange(1, len(odds[method]) + 1))
+            st.session_state.investment_dict[method] = pd.DataFrame(columns=np.arange(1, len(odds[method]) + 1))
         investment_df = [round(investments[method][0]  / 1000 / odd, 2) for odd in odds[method]]
-        investment_dict[method].loc[time_now] = investment_df
+        st.session_state.investment_dict[method].loc[time_now] = investment_df
       elif method in ['QIN','QPL',"FCT","TRI","FF"]:
         if odds[method]:
           combination, odds_array = zip(*odds[method])
-          if investment_dict[method].empty:
-            investment_dict[method] = pd.DataFrame(columns=combination)
+          if st.session_state.investment_dict[method].empty:
+            st.session_state.investment_dict[method] = pd.DataFrame(columns=combination)
           investment_df = [round(investments[method][0]  / 1000 / odd, 2) for odd in odds_array]
               # Set the values with the specified index
-          investment_dict[method].loc[time_now] = investment_df
-  #st.write(investment_dict)
+          st.session_state.investment_dict[method].loc[time_now] = investment_df
+  #st.write(st.session_state.investment_dict)
 def print_data(time_now,period):
   for watch in watchlist:
-    data = odds_dict[watch].tail(period)
+    data = st.session_state.odds_dict[watch].tail(period)
     data.index = data.index.strftime('%H:%M:%S')
     if watch in ['WIN','PLA']:
       data.columns = np.arange(len(numbered_dict[race_no]))+1
@@ -298,15 +298,15 @@ def investment_combined(time_now,method,df):
   return sums_df
 
 def get_overall_investment(time_now,dict):
-    investment_df = investment_dict
+    investment_df = st.session_state.investment_dict
     no_of_horse = len(investment_df['WIN'].columns)
     total_investment_df = pd.DataFrame(index =[time_now], columns=np.arange(1,no_of_horse +1))
     for method in methodlist:
       if method in ['WIN','PLA']:
-        overall_investment_dict[method] = overall_investment_dict[method]._append(investment_dict[method].tail(1))
+        overall_st.session_state.investment_dict[method] = overall_st.session_state.investment_dict[method]._append(st.session_state.investment_dict[method].tail(1))
       elif method in ['QIN','QPL']:
         if not investment_df[method].empty:
-          overall_investment_dict[method] = overall_investment_dict[method]._append(investment_combined(time_now,method,investment_dict[method].tail(1)))
+          overall_st.session_state.investment_dict[method] = overall_st.session_state.investment_dict[method]._append(investment_combined(time_now,method,st.session_state.investment_dict[method].tail(1)))
         else:
           continue
 
@@ -314,15 +314,15 @@ def get_overall_investment(time_now,dict):
         total_investment = 0
         for method in methodlist:
             if method in ['WIN', 'PLA']:
-                investment = overall_investment_dict[method][horse].values[-1]
+                investment = overall_st.session_state.investment_dict[method][horse].values[-1]
             elif method in ['QIN','QPL']:
               if not investment_df[method].empty: 
-                investment = overall_investment_dict[method][horse].values[-1]
+                investment = overall_st.session_state.investment_dict[method][horse].values[-1]
               else:
                 continue
             total_investment += investment
         total_investment_df[horse] = total_investment
-    overall_investment_dict['overall'] = overall_investment_dict['overall']._append(total_investment_df)
+    overall_st.session_state.investment_dict['overall'] = overall_st.session_state.investment_dict['overall']._append(total_investment_df)
 
 def print_bar_chart(time_now):
   post_time = post_time_dict[race_no]
@@ -333,12 +333,12 @@ def print_bar_chart(time_now):
       odds_list = pd.DataFrame()
       df = pd.DataFrame()
       if method == 'overall':
-          df = overall_investment_dict[method]
-          change_data = diff_dict[method].iloc[-1]
+          df = overall_st.session_state.investment_dict[method]
+          change_data = st.session_state.diff_dict[method].iloc[-1]
       elif method in methodlist:
-          df = overall_investment_dict[method]
-          change_data = diff_dict[method].tail(10).sum(axis = 0)
-          odds_list = odds_dict[method]
+          df = overall_st.session_state.investment_dict[method]
+          change_data = st.session_state.diff_dict[method].tail(10).sum(axis = 0)
+          odds_list = st.session_state.odds_dict[method]
       if df.empty:
         continue
       fig, ax1 = plt.subplots(figsize=(12, 6))
@@ -446,19 +446,19 @@ def print_bar_chart(time_now):
 def weird_data(investments):
 
   for method in methodlist:
-    if investment_dict[method].empty:
+    if st.session_state.investment_dict[method].empty:
       continue
-    latest_investment = investment_dict[method].tail(1).values
-    last_time_odds = odds_dict[method].tail(2).head(1)
+    latest_investment = st.session_state.investment_dict[method].tail(1).values
+    last_time_odds = st.session_state.odds_dict[method].tail(2).head(1)
     expected_investment = investments[method][0] / 1000 / last_time_odds
     diff = round(latest_investment - expected_investment,0)
     if method in ['WIN','PLA']:
-        diff_dict[method] = diff_dict[method]._append(diff)
+        st.session_state.diff_dict[method] = st.session_state.diff_dict[method]._append(diff)
     elif method in ['QIN','QPL']:
-        diff_dict[method] = diff_dict[method]._append(investment_combined(time_now,method,diff))
+        st.session_state.diff_dict[method] = st.session_state.diff_dict[method]._append(investment_combined(time_now,method,diff))
     #benchmark = benchmark_dict.get(method)
     #diff.index = diff.index.strftime('%H:%M:%S')
-    #for index in investment_dict[method].tail(1).columns:
+    #for index in st.session_state.investment_dict[method].tail(1).columns:
       #error = diff[index].values[0]
       #error_df = []
       #if error > benchmark:
@@ -470,24 +470,24 @@ def weird_data(investments):
         #  highlight = '**'
         #else:
         #  highlight = '***'
-        #error_df = pd.DataFrame([[index,error,odds_dict[method].tail(1)[index].values,highlight]], columns=['No.', 'error','odds', 'Highlight'],index = diff.index)
-      #weird_dict[method] = weird_dict[method]._append(error_df)
+        #error_df = pd.DataFrame([[index,error,st.session_state.odds_dict[method].tail(1)[index].values,highlight]], columns=['No.', 'error','odds', 'Highlight'],index = diff.index)
+      #st.session_state.weird_dict[method] = st.session_state.weird_dict[method]._append(error_df)
 
 def change_overall(time_now):
   total_investment = 0
   for method in methodlist:
-    total_investment += diff_dict[method].sum(axis=0)
+    total_investment += st.session_state.diff_dict[method].sum(axis=0)
   total_investment_df = pd.DataFrame([total_investment],index = [time_now])
-  diff_dict['overall'] = diff_dict['overall']._append(total_investment_df)
+  st.session_state.diff_dict['overall'] = st.session_state.diff_dict['overall']._append(total_investment_df)
 
-def print_concern_weird_dict():
+def print_concern_st.session_state.weird_dict():
     target_list = methodlist[0:4]
     if 'QPL' not in target_list:
       target_list = methodlist[0:3]
     for method in target_list:
       name = methodCHlist[methodlist.index(method)]
       st.write(f'{name} 異常投注')
-      df = weird_dict[method]
+      df = st.session_state.weird_dict[method]
       df_tail = df.tail(20)[::-1]
       count = df.value_counts('No.')
       count_df = count.to_frame().T
@@ -661,11 +661,11 @@ def print_top():
   for method in top_list:
         if odds[method]:
           methodCHlist[methodlist.index(method)]
-          top(odds_dict[method], investment_dict[method], method)
+          top(st.session_state.odds_dict[method], st.session_state.investment_dict[method], method)
 
 def print_highlight():
   for method in ['WIN','QIN']:
-    df = weird_dict[method]
+    df = st.session_state.weird_dict[method]
     if not df.empty:
       filtered_df_3 = df[df['Highlight'] == '***']
       filtered_df_2 = df[df['Highlight'] == '**']
@@ -713,16 +713,16 @@ def _get_cached_or_empty(cache_key, surge_count_key):
 
     return df, cache.get('alert'), cache.get('fig')
   
-def run_ucb_prediction(race_no, odds, investment_dict, ucb_dict, race_dict):
+def run_ucb_prediction(race_no, odds, st.session_state.investment_dict, ucb_dict, st.session_state.race_dict):
     """
     執行 UCB 預測（不鎖定，持續更新）
     
     Args:
         race_no (int): 場次編號
         odds (dict): {'WIN': [2.1, 3.5, ...], ...}
-        investment_dict (dict): {pd.DataFrame} 每種投注的歷史投注額
+        st.session_state.investment_dict (dict): {pd.DataFrame} 每種投注的歷史投注額
         ucb_dict (dict): st.session_state.ucb_dict[race_no] 的結構
-        race_dict (dict): 馬匹基本資料
+        st.session_state.race_dict (dict): 馬匹基本資料
     
     Returns:
         df_ucb (pd.DataFrame): UCB 預測表格
@@ -746,8 +746,8 @@ def run_ucb_prediction(race_no, odds, investment_dict, ucb_dict, race_dict):
     
     # 4. 動量（投注增量）
     momentum = {}
-    if 'WIN' in investment_dict and len(investment_dict['overall']) >= 2:
-        df = investment_dict['overall']
+    if 'WIN' in st.session_state.investment_dict and len(st.session_state.investment_dict['overall']) >= 2:
+        df = st.session_state.investment_dict['overall']
         delta = df.iloc[-1] - df.iloc[-2]
         delta = np.maximum(delta.values, 0)
         total = delta.sum()
@@ -793,8 +793,8 @@ def run_ucb_prediction(race_no, odds, investment_dict, ucb_dict, race_dict):
     for i, h in enumerate(horses):
         table_data.append({
             '馬號': h,
-            '馬名': race_dict[race_no]['馬名'][i],
-            '騎師': race_dict[race_no]['騎師'][i],
+            '馬名': st.session_state.race_dict[race_no]['馬名'][i],
+            '騎師': st.session_state.race_dict[race_no]['騎師'][i],
             '賠率': f"{win_odds[i]:.2f}",
             '動量': f"{momentum.get(h, 0):.3f}",
             'UCB': f"{ucb_values.get(h, 0):.3f}",
@@ -810,9 +810,9 @@ def run_ucb_prediction(race_no, odds, investment_dict, ucb_dict, race_dict):
     return df_ucb, top4,t
 
 def analyze_momentum(
-    investment_dict,
+    st.session_state.investment_dict,
     odds,
-    race_dict,
+    st.session_state.race_dict,
     race_no,
     method='overall',
     threshold=0.1,
@@ -825,7 +825,7 @@ def analyze_momentum(
 
     Args:
         odds (dict): 包含 'WIN' 的賠率
-        race_dict (dict): 馬匹資料
+        st.session_state.race_dict (dict): 馬匹資料
         race_no (int): 當前場次
         ...其他參數
     """
@@ -836,9 +836,9 @@ def analyze_momentum(
         st.session_state[cache_key] = {'df': None, 'fig': None, 'alert': None}
 
     # 2. 防錯
-    if method not in investment_dict or 'WIN' not in odds or race_no not in race_dict:
+    if method not in st.session_state.investment_dict or 'WIN' not in odds or race_no not in st.session_state.race_dict:
         return _get_cached_or_empty(cache_key, surge_count_key)
-    df = investment_dict[method]
+    df = st.session_state.investment_dict[method]
     if len(df) < 2:
         return _get_cached_or_empty(cache_key, surge_count_key)
 
@@ -893,8 +893,8 @@ def analyze_momentum(
 
         table_data.append({
             '馬號': h,
-            '馬名': race_dict[race_no]['馬名'][i],
-            '騎師': race_dict[race_no]['騎師'][i],
+            '馬名': st.session_state.race_dict[race_no]['馬名'][i],
+            '騎師': st.session_state.race_dict[race_no]['騎師'][i],
             '賠率': odds_display,
             '當前動量': f"{curr:.3f}",
             '平均動量': f"{avg:.3f}",
@@ -931,9 +931,9 @@ def print_ucb():
                 df_ucb, top4 ,latest_t= run_ucb_prediction(
                         race_no=race_no,
                         odds=odds,
-                        investment_dict=overall_investment_dict,
+                        st.session_state.investment_dict=overall_st.session_state.investment_dict,
                         ucb_dict=st.session_state.ucb_dict,
-                        race_dict=race_dict
+                        st.session_state.race_dict=st.session_state.race_dict
                     )
                 display_ucb = st.session_state.ucb_dict[race_no]
                 df_display = df_ucb
@@ -947,9 +947,9 @@ def print_momentum():
             st.subheader("動量市場分析")
             
             df_mom, alert, fig = analyze_momentum(
-                investment_dict=overall_investment_dict,
+                st.session_state.investment_dict=overall_st.session_state.investment_dict,
                 odds=odds,
-                race_dict=race_dict,
+                st.session_state.race_dict=st.session_state.race_dict,
                 race_no=race_no,
                 method='overall',
                 threshold=0.1,
@@ -1222,7 +1222,7 @@ if not st.session_state.api_called:
   if response.status_code == 200:
         data = response.json()
         race_meetings = data.get('data', {}).get('raceMeetings', [])
-        race_dict = {}
+        st.session_state.race_dict = {}
         post_time_dict = {}
         for meeting in race_meetings:
             for race in meeting.get('races', []):
@@ -1233,30 +1233,30 @@ if not st.session_state.api_called:
                 post_time = race.get("postTime", "")
                 time_part = datetime.fromisoformat(post_time) if post_time else None
                 post_time_dict[race_number] = time_part
-                race_dict[race_number] = {"馬名": [], "騎師": [], "練馬師": [], "最近賽績": []}
+                st.session_state.race_dict[race_number] = {"馬名": [], "騎師": [], "練馬師": [], "最近賽績": []}
                 for runner in race.get('runners', []):
                     if runner.get('standbyNo') == "":
                         name_ch = runner.get('name_ch', '')
                         jockey_name_ch = runner.get('jockey', {}).get('name_ch', '')
                         trainer_name_ch = runner.get('trainer', {}).get('name_ch', '')
                         last6run = runner.get('last6run', '')
-                        race_dict[race_number]["馬名"].append(name_ch)
-                        race_dict[race_number]["騎師"].append(jockey_name_ch)
-                        race_dict[race_number]["練馬師"].append(trainer_name_ch)
-                        race_dict[race_number]["最近賽績"].append(last6run)
+                        st.session_state.race_dict[race_number]["馬名"].append(name_ch)
+                        st.session_state.race_dict[race_number]["騎師"].append(jockey_name_ch)
+                        st.session_state.race_dict[race_number]["練馬師"].append(trainer_name_ch)
+                        st.session_state.race_dict[race_number]["最近賽績"].append(last6run)
 
         # 建立 race_dataframes
         race_dataframes = {}
         numbered_dict = {}
-        for race_number in race_dict:
-            df = pd.DataFrame(race_dict[race_number])
+        for race_number in st.session_state.race_dict:
+            df = pd.DataFrame(st.session_state.race_dict[race_number])
             df.index += 1
-            numbered_list = [f"{i+1}. {name}" for i, name in enumerate(race_dict[race_number]['馬名'])]
+            numbered_list = [f"{i+1}. {name}" for i, name in enumerate(st.session_state.race_dict[race_number]['馬名'])]
             numbered_dict[race_number] = numbered_list
             race_dataframes[race_number] = df
 
         # 存入 session_state
-        st.session_state.race_dict = race_dict
+        st.session_state.st.session_state.race_dict = st.session_state.race_dict
         st.session_state.post_time_dict = post_time_dict
         st.session_state.numbered_dict = numbered_dict
         st.session_state.race_dataframes = race_dataframes
@@ -1280,35 +1280,35 @@ else:
 if st.session_state.reset:
 
     # 初始化 session_state 資料
-    st.session_state.odds_dict = {}
+    st.session_state.st.session_state.odds_dict = {}
     for method in methodlist:
-        st.session_state.odds_dict[method] = pd.DataFrame()
+        st.session_state.st.session_state.odds_dict[method] = pd.DataFrame()
 
-    st.session_state.investment_dict = {}
+    st.session_state.st.session_state.investment_dict = {}
     for method in methodlist:
-        st.session_state.investment_dict[method] = pd.DataFrame()
+        st.session_state.st.session_state.investment_dict[method] = pd.DataFrame()
 
-    st.session_state.overall_investment_dict = {}
+    st.session_state.overall_st.session_state.investment_dict = {}
     for method in methodlist:
-        st.session_state.overall_investment_dict.setdefault(method, pd.DataFrame())
-    st.session_state.overall_investment_dict.setdefault('overall', pd.DataFrame())
+        st.session_state.overall_st.session_state.investment_dict.setdefault(method, pd.DataFrame())
+    st.session_state.overall_st.session_state.investment_dict.setdefault('overall', pd.DataFrame())
 
-    st.session_state.weird_dict = {}
+    st.session_state.st.session_state.weird_dict = {}
     for method in methodlist:
-        st.session_state.weird_dict.setdefault(method, pd.DataFrame([], columns=['No.', 'error', 'odds', 'Highlight']))
+        st.session_state.st.session_state.weird_dict.setdefault(method, pd.DataFrame([], columns=['No.', 'error', 'odds', 'Highlight']))
 
-    st.session_state.diff_dict = {}
+    st.session_state.st.session_state.diff_dict = {}
     for method in methodlist:
-        st.session_state.diff_dict.setdefault(method, pd.DataFrame())
-    st.session_state.diff_dict.setdefault('overall', pd.DataFrame())
+        st.session_state.st.session_state.diff_dict.setdefault(method, pd.DataFrame())
+    st.session_state.st.session_state.diff_dict.setdefault('overall', pd.DataFrame())
 
     # 初始化 ubc_dict
     if 'ubc_dict' not in st.session_state:
         st.session_state.ubc_dict = {}
 
-    for race_number in st.session_state.race_dict:
+    for race_number in st.session_state.st.session_state.race_dict:
         if race_number not in st.session_state.ubc_dict:
-            n_horses = len(st.session_state.race_dict[race_number]['馬名'])
+            n_horses = len(st.session_state.st.session_state.race_dict[race_number]['馬名'])
             st.session_state.ubc_dict[race_number] = {
                 'state': {'t': 0, 'selected_count': {i+1: 0 for i in range(n_horses)}},
                 'history': {},
