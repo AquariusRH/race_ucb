@@ -989,10 +989,7 @@ with infoColumns[1]:
 with infoColumns[2]:
     race_options = np.arange(1, 12)
     race_no = st.selectbox('場次:', race_options)
-if 'reset' not in st.session_state:
-    st.session_state.reset = False
-if 'api_called' not in st.session_state:
-    st.session_state.api_called = False
+
 # --- 投注方式選擇 ---
 available_methods = ['WIN', 'PLA', 'QIN', 'QPL', 'FCT', 'TRI', 'FF']
 available_methods_ch = ['獨贏', '位置', '連贏', '位置Q', '二重彩', '單T', '四連環']
@@ -1265,7 +1262,7 @@ if not st.session_state.api_called:
       numbered_dict[race_number] = numbered_list
       race_dataframes[race_number] = df
   st.session_state.api_called = True
-  save_state()
+  
 
 top_container = st.container()
 placeholder = st.empty()
