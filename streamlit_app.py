@@ -825,7 +825,7 @@ def analyze_momentum(
 
     Args:
         odds (dict): 包含 'WIN' 的賠率
-        st.session_state.race_dict (dict): 馬匹資料
+        race_dict (dict): 馬匹資料
         race_no (int): 當前場次
         ...其他參數
     """
@@ -922,7 +922,7 @@ def analyze_momentum(
         'fig': fig,
         'alert': alert
     }
-    
+
     return df_momentum, alert, fig
   
 def print_ucb():
