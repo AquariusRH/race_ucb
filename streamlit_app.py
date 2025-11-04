@@ -1010,6 +1010,7 @@ top_list = [item for item in top_list_default if item in selected_methods]
 # Define the button callback
 def click_start_button():
     st.session_state.reset = True
+    st.session_state.api_called = False
 
 # --- 開始按鈕 ---
 if st.button("開始", on_click=click_start_button):
