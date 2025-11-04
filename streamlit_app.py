@@ -931,9 +931,9 @@ def print_ucb():
                 df_ucb, top4 ,latest_t= run_ucb_prediction(
                         race_no=race_no,
                         odds=odds,
-                        st.session_state.investment_dict=overall_st.session_state.investment_dict,
+                        investment_dict=st.session_state.overall_investment_dict,
                         ucb_dict=st.session_state.ucb_dict,
-                        st.session_state.race_dict=st.session_state.race_dict
+                        race_dict=st.session_state.race_dict
                     )
                 display_ucb = st.session_state.ucb_dict[race_no]
                 df_display = df_ucb
