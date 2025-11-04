@@ -1256,7 +1256,7 @@ if not st.session_state.api_called:
             race_dataframes[race_number] = df
 
         # 存入 session_state
-        st.session_state.st.session_state.race_dict = st.session_state.race_dict
+        st.session_state.race_dict = race_dict
         st.session_state.post_time_dict = post_time_dict
         st.session_state.numbered_dict = numbered_dict
         st.session_state.race_dataframes = race_dataframes
@@ -1280,35 +1280,35 @@ else:
 if st.session_state.reset:
 
     # 初始化 session_state 資料
-    st.session_state.st.session_state.odds_dict = {}
+    st.session_state.odds_dict = {}
     for method in methodlist:
-        st.session_state.st.session_state.odds_dict[method] = pd.DataFrame()
+       st.session_state.odds_dict[method] = pd.DataFrame()
 
-    st.session_state.st.session_state.investment_dict = {}
+    st.session_state.investment_dict = {}
     for method in methodlist:
-        st.session_state.st.session_state.investment_dict[method] = pd.DataFrame()
+        st.session_state.investment_dict[method] = pd.DataFrame()
 
-    st.session_state.overall_st.session_state.investment_dict = {}
+    overall_st.session_state.investment_dict = {}
     for method in methodlist:
         st.session_state.overall_st.session_state.investment_dict.setdefault(method, pd.DataFrame())
-    st.session_state.overall_st.session_state.investment_dict.setdefault('overall', pd.DataFrame())
+    st.session_state.overall_investment_dict.setdefault('overall', pd.DataFrame())
 
-    st.session_state.st.session_state.weird_dict = {}
+    st.session_state.weird_dict = {}
     for method in methodlist:
-        st.session_state.st.session_state.weird_dict.setdefault(method, pd.DataFrame([], columns=['No.', 'error', 'odds', 'Highlight']))
+        st.session_state.weird_dict.setdefault(method, pd.DataFrame([], columns=['No.', 'error', 'odds', 'Highlight']))
 
-    st.session_state.st.session_state.diff_dict = {}
+    st.session_state.diff_dict = {}
     for method in methodlist:
-        st.session_state.st.session_state.diff_dict.setdefault(method, pd.DataFrame())
-    st.session_state.st.session_state.diff_dict.setdefault('overall', pd.DataFrame())
+        st.session_state.diff_dict.setdefault(method, pd.DataFrame())
+    st.session_state.diff_dict.setdefault('overall', pd.DataFrame())
 
     # 初始化 ubc_dict
     if 'ubc_dict' not in st.session_state:
         st.session_state.ubc_dict = {}
 
-    for race_number in st.session_state.st.session_state.race_dict:
+    for race_number in st.session_state.race_dict:
         if race_number not in st.session_state.ubc_dict:
-            n_horses = len(st.session_state.st.session_state.race_dict[race_number]['馬名'])
+            n_horses = len(st.session_state.race_dict[race_number]['馬名'])
             st.session_state.ubc_dict[race_number] = {
                 'state': {'t': 0, 'selected_count': {i+1: 0 for i in range(n_horses)}},
                 'history': {},
