@@ -1252,16 +1252,22 @@ if not st.session_state.api_called:
   else:
       print(f'Failed to retrieve data. Status code: {response.status_code}')
 
-  race_dataframes = {}
-  numbered_dict = {}
-  ubc_dict= {}
-  for race_number in race_dict:
+    race_dataframes = {}
+    numbered_dict = {}
+    ubc_dict= {}
+    
+    for race_number in race_dict:
       df = pd.DataFrame(race_dict[race_number])
       df.index += 1  # Set index to start from 1
       numbered_list = [f"{i+1}. {name}" for i, name in enumerate(race_dict[race_number]['馬名'])]
       numbered_dict[race_number] = numbered_list
       race_dataframes[race_number] = df
-  st.session_state.api_called = True
+  
+    st.session_state.race_dict = race_dict
+    st.session_state.post_time_dict = post_time_dict
+    st.session_state.numbered_dict = numbered_dict
+    st.session_state.race_dataframes = race_dataframes  # 關鍵！
+    st.session_state.api_called = True
   
 
 top_container = st.container()
