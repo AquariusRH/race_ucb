@@ -480,7 +480,7 @@ def change_overall(time_now):
   total_investment_df = pd.DataFrame([total_investment],index = [time_now])
   st.session_state.diff_dict['overall'] = st.session_state.diff_dict['overall']._append(total_investment_df)
 
-def print_concern_st.session_state.weird_dict():
+def print_concern_weird_dict():
     target_list = methodlist[0:4]
     if 'QPL' not in target_list:
       target_list = methodlist[0:3]
