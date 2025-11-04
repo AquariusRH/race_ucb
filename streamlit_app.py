@@ -713,7 +713,7 @@ def _get_cached_or_empty(cache_key, surge_count_key):
 
     return df, cache.get('alert'), cache.get('fig')
   
-def run_ucb_prediction(race_no, odds, st.session_state.investment_dict, ucb_dict, st.session_state.race_dict):
+def run_ucb_prediction(race_no, odds, investment_dict, ucb_dict, race_dict):
     """
     執行 UCB 預測（不鎖定，持續更新）
     
@@ -810,9 +810,9 @@ def run_ucb_prediction(race_no, odds, st.session_state.investment_dict, ucb_dict
     return df_ucb, top4,t
 
 def analyze_momentum(
-    st.session_state.investment_dict,
+    investment_dict,
     odds,
-    st.session_state.race_dict,
+    race_dict,
     race_no,
     method='overall',
     threshold=0.1,
