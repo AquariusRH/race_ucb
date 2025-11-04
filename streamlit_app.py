@@ -1290,7 +1290,7 @@ if st.session_state.reset:
 
     overall_st.session_state.investment_dict = {}
     for method in methodlist:
-        st.session_state.overall_st.session_state.investment_dict.setdefault(method, pd.DataFrame())
+        st.session_state.overall_investment_dict.setdefault(method, pd.DataFrame())
     st.session_state.overall_investment_dict.setdefault('overall', pd.DataFrame())
 
     st.session_state.weird_dict = {}
