@@ -1321,7 +1321,7 @@ if st.session_state.reset:
 
     while time.time() <= end_time:
         with placeholder.container():
-            st.write(st.session_state.post_time_dict)
+            st.write(st.session_state.race_dict)
             time_now = datetime.now() + datere.relativedelta(hours=8)
             odds = get_odds_data()
             investments = get_investment_data()
