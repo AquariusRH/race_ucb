@@ -1218,63 +1218,60 @@ if not st.session_state.api_called:
   }
 
   # Make a POST request to the API
-  response = requests.post(url, json=payload)
-
-  # Check if the request was successful
-  if response.status_code == 200:
-      data = response.json()
-      # Extract the 'race_no' and 'name_ch' fields and save them into a dictionary
-      race_meetings = data.get('data', {}).get('raceMeetings', [])
-      race_dict = {}
-      post_time_dict = {}
-      for meeting in race_meetings:
-          for race in meeting.get('races', []):
-              id = race.get('runners', [])[0].get('id')
-              if id[8:10] != place:
+    response = requests.post(url, json=payload)
+    if response.status_code == 200:
+        data = response.json()
+        race_meetings = data.get('data', {}).get('raceMeetings', [])
+        race_dict = {}
+        post_time_dict = {}
+        for meeting in race_meetings:
+            for race in meeting.get('races', []):
+                id_val = race.get('runners', [])[0].get('id', '')
+                if id_val and id_val[8:10] != place:
                     continue
-              race_number = race["no"]
-              post_time = race.get("postTime", "Field not found")
-              time_part = datetime.fromisoformat(post_time)
-              post_time_dict[race_number] = time_part
-              race_dict[race_number] = {"馬名": [], "騎師": [],'練馬師':[],'最近賽績':[]}
-              for runner in race.get('runners', []):
-                if runner.get('standbyNo') == "":
-                  name_ch = runner.get('name_ch', 'Field not found')
-                  jockey_name_ch = runner.get('jockey', {}).get('name_ch', 'Field not found')
-                  trainer_name_ch = runner.get('trainer', {}).get('name_ch', 'Field not found')
-                  last6run = runner.get('last6run', 'Field not found')
-                  race_dict[race_number]["馬名"].append(name_ch)
-                  race_dict[race_number]["騎師"].append(jockey_name_ch)
-                  race_dict[race_number]["練馬師"].append(trainer_name_ch)
-                  race_dict[race_number]["最近賽績"].append(last6run)
-      print('完成')
-  else:
-      print(f'Failed to retrieve data. Status code: {response.status_code}')
+                race_number = race["no"]
+                post_time = race.get("postTime", "")
+                time_part = datetime.fromisoformat(post_time) if post_time else None
+                post_time_dict[race_number] = time_part
+                race_dict[race_number] = {"馬名": [], "騎師": [], "練馬師": [], "最近賽績": []}
+                for runner in race.get('runners', []):
+                    if runner.get('standbyNo') == "":
+                        name_ch = runner.get('name_ch', '')
+                        jockey_name_ch = runner.get('jockey', {}).get('name_ch', '')
+                        trainer_name_ch = runner.get('trainer', {}).get('name_ch', '')
+                        last6run = runner.get('last6run', '')
+                        race_dict[race_number]["馬名"].append(name_ch)
+                        race_dict[race_number]["騎師"].append(jockey_name_ch)
+                        race_dict[race_number]["練馬師"].append(trainer_name_ch)
+                        race_dict[race_number]["最近賽績"].append(last6run)
 
-  race_dataframes = {}
-  numbered_dict = {}
-  ubc_dict= {}
+        # 建立 race_dataframes
+        race_dataframes = {}
+        numbered_dict = {}
+        for race_number in race_dict:
+            df = pd.DataFrame(race_dict[race_number])
+            df.index += 1
+            numbered_list = [f"{i+1}. {name}" for i, name in enumerate(race_dict[race_number]['馬名'])]
+            numbered_dict[race_number] = numbered_list
+            race_dataframes[race_number] = df
 
-  for race_number in race_dict:
-          df = pd.DataFrame(race_dict[race_number])
-          df.index += 1  # Set index to start from 1
-          numbered_list = [f"{i+1}. {name}" for i, name in enumerate(race_dict[race_number]['馬名'])]
-          numbered_dict[race_number] = numbered_list
-          race_dataframes[race_number] = df
-  
-  st.session_state.race_dict = race_dict
-  st.session_state.post_time_dict = post_time_dict
-  st.session_state.numbered_dict = numbered_dict
-  st.session_state.race_dataframes = race_dataframes  # 關鍵！
-  st.session_state.api_called = True
-    
+        # 存入 session_state
+        st.session_state.race_dict = race_dict
+        st.session_state.post_time_dict = post_time_dict
+        st.session_state.numbered_dict = numbered_dict
+        st.session_state.race_dataframes = race_dataframes
+        st.session_state.api_called = True
+        st.success("賽事資料載入完成！")
+    else:
+        st.error("API 呼叫失敗")
+
 # --- 顯示資料 ---
 if st.session_state.api_called and race_no in st.session_state.race_dataframes:
     with top_container:
         st.write(f"第 {race_no} 場 賽事資料")
         st.dataframe(st.session_state.race_dataframes[race_no], use_container_width=True)
 else:
-    st.info("請先點「開始」載入賽事資料")  
+    st.info("請先點「開始」載入賽事資料")
 
 top_container = st.container()
 placeholder = st.empty()
