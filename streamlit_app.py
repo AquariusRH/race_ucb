@@ -1311,6 +1311,6 @@ if st.session_state.reset:
             odds = get_odds_data()
             investments = get_investment_data()
             main(time_now, odds, investments, period=2)
-
+            st.write(st.session_state.overall_investment_dict)
             time.sleep(15)
            
