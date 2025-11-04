@@ -806,7 +806,7 @@ def run_ucb_prediction(race_no, odds, investment_dict, ucb_dict, race_dict):
     #8. 存入 history
     ucb_data['history'][t] = df_ucb.copy()
     ucb_data['top4_history'][t] = top4.copy()
-    
+    st.write(df_ucb)
     return df_ucb, top4,t
 
 def analyze_momentum(
@@ -922,7 +922,7 @@ def analyze_momentum(
         'fig': fig,
         'alert': alert
     }
-
+    
     return df_momentum, alert, fig
   
 def print_ucb():
