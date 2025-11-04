@@ -1277,9 +1277,6 @@ top_container = st.container()
 placeholder = st.empty()
 ucb_placeholder= st.container()
 if st.session_state.reset:
-    with top_container:
-        st.write(f"DataFrame for Race No: {race_no}")
-        st.dataframe(st.session_state.race_dataframes[race_no], use_container_width=True)
 
     # 初始化 session_state 資料
     st.session_state.odds_dict = {}
