@@ -1265,6 +1265,9 @@ if not st.session_state.api_called:
   else:
         st.error("API 呼叫失敗")
 
+top_container = st.container()
+placeholder = st.empty()
+ucb_placeholder= st.container()
 # --- 顯示資料 ---
 if st.session_state.api_called and race_no in st.session_state.race_dataframes:
     with top_container:
@@ -1273,9 +1276,7 @@ if st.session_state.api_called and race_no in st.session_state.race_dataframes:
 else:
     st.info("請先點「開始」載入賽事資料")
 
-top_container = st.container()
-placeholder = st.empty()
-ucb_placeholder= st.container()
+
 if st.session_state.reset:
 
     # 初始化 session_state 資料
