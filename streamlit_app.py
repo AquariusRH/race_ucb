@@ -325,7 +325,7 @@ def get_overall_investment(time_now,dict):
     st.session_state.overall_investment_dict['overall'] = st.session_state.overall_investment_dict['overall']._append(total_investment_df)
 
 def print_bar_chart(time_now):
-  post_time = post_time_dict[race_no]
+  post_time = st.session_state.post_time_dict[race_no]
   time_25_minutes_before = np.datetime64(post_time - timedelta(minutes=25) + timedelta(hours=8))
   time_5_minutes_before = np.datetime64(post_time - timedelta(minutes=5) + timedelta(hours=8))
   
@@ -1222,7 +1222,7 @@ if not st.session_state.api_called:
   if response.status_code == 200:
         data = response.json()
         race_meetings = data.get('data', {}).get('raceMeetings', [])
-        st.session_state.race_dict = {}
+        race_dict = {}
         post_time_dict = {}
         for meeting in race_meetings:
             for race in meeting.get('races', []):
@@ -1232,7 +1232,7 @@ if not st.session_state.api_called:
                 race_number = race["no"]
                 post_time = race.get("postTime", "")
                 time_part = datetime.fromisoformat(post_time) if post_time else None
-                post_time_dict[race_number] = time_part
+                st.session_state.post_time_dict[race_number] = time_part
                 st.session_state.race_dict[race_number] = {"馬名": [], "騎師": [], "練馬師": [], "最近賽績": []}
                 for runner in race.get('runners', []):
                     if runner.get('standbyNo') == "":
