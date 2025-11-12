@@ -884,6 +884,17 @@ def analyze_momentum(
 
     df_momentum = pd.DataFrame(table_data).sort_values(['爆量次數', '當前動量'], ascending=[False, False])
 
+    post_time = st.session_state.post_time_dict.get(race_no)
+    if post_time is None:
+        time_left_str = "未載入"
+    else:
+        now = datetime.now() + datere.relativedelta(hours=8)
+        time_left = post_time - now
+        if time_left.total_seconds() <= 0:
+            time_left_str = "已開跑"
+        else:
+            minutes = int(time_left.total_seconds() // 60)
+            time_left_str = f"離開跑 {minutes} 分"
     # 8. 熱圖
     current_time = datetime.now().strftime("%H:%M:%S")
     fig, ax = plt.subplots(figsize=(12, 2))
@@ -892,7 +903,7 @@ def analyze_momentum(
     ax.set_xticks(range(len(horses)))
     ax.set_xticklabels([f"{i}" for i in horses])
     ax.set_yticks([])
-    ax.set_title(f"即時動量熱圖（{method}） - 第 {race_no} 場  |  更新時間：{current_time}")
+    ax.set_title(f"第 {race_no} 場 即時動量雷達  |  {time_left_str}", fontweight='bold')
     plt.colorbar(im, ax=ax, label='動量比例', shrink=0.8)
     plt.tight_layout()
 
