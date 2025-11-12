@@ -885,13 +885,14 @@ def analyze_momentum(
     df_momentum = pd.DataFrame(table_data).sort_values(['爆量次數', '當前動量'], ascending=[False, False])
 
     # 8. 熱圖
+    current_time = datetime.now().strftime("%H:%M:%S")
     fig, ax = plt.subplots(figsize=(12, 2))
     values = [momentum_current.get(i, 0) for i in horses]
     im = ax.imshow([values], cmap='Reds', aspect='auto', vmin=0, vmax=0.5)
     ax.set_xticks(range(len(horses)))
     ax.set_xticklabels([f"{i}" for i in horses])
     ax.set_yticks([])
-    ax.set_title(f"即時動量熱圖（{method}） - 第 {race_no} 場")
+    ax.set_title(f"即時動量熱圖（{method}） - 第 {race_no} 場  |  更新時間：{current_time}")
     plt.colorbar(im, ax=ax, label='動量比例', shrink=0.8)
     plt.tight_layout()
 
