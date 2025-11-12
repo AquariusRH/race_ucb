@@ -2,7 +2,7 @@ import streamlit as st
 import requests
 import pandas as pd
 import numpy as np
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from dateutil import relativedelta as datere
 import pytz
 import time
@@ -883,18 +883,28 @@ def analyze_momentum(
         })
 
     df_momentum = pd.DataFrame(table_data).sort_values(['爆量次數', '當前動量'], ascending=[False, False])
-
-    post_time = st.session_state.post_time_dict.get(race_no)
-    if post_time is None:
-        time_left_str = "未載入"
+    HK_TZ = timezone(timedelta(hours=8))
+    now_naive = datetime.now()
+    now = now_naive + datere.relativedelta(hours=8)
+    now = now.replace(tzinfo=HK_TZ)
+    post_time_raw = st.session_state.post_time_dict.get(race_no)
+    
+    if post_time_raw is None:
+        time_str = "未載入"
     else:
-        now = datetime.now() + datere.relativedelta(hours=8)
-        time_left = post_time - now
-        if time_left.total_seconds() <= 0:
-            time_left_str = "已開跑"
+        # 確保 post_time 也有時區
+        if post_time_raw.tzinfo is None:
+            post_time = post_time_raw.replace(tzinfo=HK_TZ)
         else:
-            minutes = int(time_left.total_seconds() // 60)
-            time_left_str = f"離開跑 {minutes} 分"
+            post_time = post_time_raw  # 已有時區
+    
+        seconds_left = (post_time - now).total_seconds()
+        
+        if seconds_left <= 0:
+            time_str = "已開跑"
+        else:
+            minutes = int(seconds_left // 60)
+            time_str = f"離開跑 {minutes} 分"
     # 8. 熱圖
     current_time = datetime.now().strftime("%H:%M:%S")
     fig, ax = plt.subplots(figsize=(12, 2))
