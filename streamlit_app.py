@@ -913,7 +913,7 @@ def analyze_momentum(
     ax.set_xticks(range(len(horses)))
     ax.set_xticklabels([f"{i}" for i in horses])
     ax.set_yticks([])
-    ax.set_title(f"第 {race_no} 場 即時動量雷達  |  {time_left_str}", fontweight='bold')
+    ax.set_title(f"第 {race_no} 場 即時動量雷達  |  {time_str}", fontweight='bold')
     plt.colorbar(im, ax=ax, label='動量比例', shrink=0.8)
     plt.tight_layout()
 
