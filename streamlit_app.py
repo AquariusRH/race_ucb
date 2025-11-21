@@ -335,6 +335,13 @@ def print_bar_chart(time_now):
       if method == 'overall':
           df = st.session_state.overall_investment_dict[method]
           change_data = st.session_state.diff_dict[method].iloc[-1]
+      elif method == 'WIN&PLA':
+          df = st.session_state.overall_investment_dict['WIN'] + st.session_state.overall_investment_dict['PLA']
+          change_data = st.session_state.diff_dict['WIN'].tail(10).sum(axis = 0) + st.session_state.diff_dict['PLA'].tail(10).sum(axis = 0)
+          odds_list = st.session_state.odds_dict['WIN']
+      elif method == 'QIN&QPL':
+          df = st.session_state.overall_investment_dict['QIN'] + st.session_state.overall_investment_dict['QPL']
+          change_data = st.session_state.diff_dict['QIN'].tail(10).sum(axis = 0) + st.session_state.diff_dict['QPL'].tail(10).sum(axis = 0)
       elif method in methodlist:
           df = st.session_state.overall_investment_dict[method]
           change_data = st.session_state.diff_dict[method].tail(10).sum(axis = 0)
@@ -354,7 +361,7 @@ def print_bar_chart(time_now):
 
       change_df = pd.DataFrame([change_data.apply(lambda x: x*6 if x > 0 else x*3)],columns=change_data.index,index =[df.index[-1]])
       print(change_df)
-      if method in ['WIN', 'PLA']:
+      if method in ['WIN', 'PLA', 'WIN&PLA']:
         odds_list.index = pd.to_datetime(odds_list.index)
         odds_1st = odds_list[odds_list.index< time_25_minutes_before].tail(1)
         odds_2nd = odds_list[odds_list.index >= time_25_minutes_before].tail(1)
@@ -406,7 +413,7 @@ def print_bar_chart(time_now):
                 #bar = ax1.bar(X_axis+0.2,sorted_change_df.iloc[0],0.4,label='改變',color='grey')
 
       # Add numbers above bars
-      if method in ['WIN', 'PLA']:
+      if method in ['WIN', 'PLA','WIN&PLA']:
         if bars_2nd is not None:
           sorted_odds_list_2nd = odds_2nd[X].iloc[0]
           for bar, odds in zip(bars_2nd, sorted_odds_list_2nd):
@@ -441,6 +448,10 @@ def print_bar_chart(time_now):
           plt.title('獨贏', fontsize=15)
       elif method == 'PLA':
           plt.title('位置', fontsize=15)
+      elif method == 'WIN&PLA':
+          plt.title('獨贏及位置', fontsize=15)
+      elif method == 'QIN&QPL':
+          plt.title('連贏及位置Q', fontsize=15)          
       st.pyplot(fig)
 
 def weird_data(investments):
@@ -995,8 +1006,8 @@ with infoColumns[2]:
 available_methods = ['WIN', 'PLA', 'QIN', 'QPL', 'FCT', 'TRI', 'FF']
 available_methods_ch = ['獨贏', '位置', '連贏', '位置Q', '二重彩', '單T', '四連環']
 print_list_default = ['WIN','PLA','QIN','QPL','FCT', 'TRI', 'FF']
-top_list_default = ['QIN','QPL','WIN','PLA','FCT', 'TRI', 'FF']
-default_checked_methods = ['WIN','QIN']
+top_list_default = ['QIN','WIN','FCT', 'TRI', 'FF']
+default_checked_methods = ['WIN','PLA','QIN','QPL']
 method_columns = st.columns(len(available_methods))
 selected_methods = []
 for idx, (method, method_ch) in enumerate(zip(available_methods, available_methods_ch)):
@@ -1006,7 +1017,29 @@ for idx, (method, method_ch) in enumerate(zip(available_methods, available_metho
 
 methodlist = selected_methods
 methodCHlist = [available_methods_ch[available_methods.index(method)] for method in selected_methods]
-print_list = [item for item in print_list_default if item in selected_methods]
+# === 1. print_list：聰明合併 WIN&PLA 和 QIN&QPL ===
+print_list = []
+
+# WIN & PLA 合併
+if 'WIN' in selected_methods and 'PLA' in selected_methods:
+    print_list.append('WIN&PLA')
+else:
+    if 'WIN' in selected_methods: print_list.append('WIN')
+    if 'PLA' in selected_methods: print_list.append('PLA')
+
+# QIN & QPL 合併
+if 'QIN' in selected_methods and 'QPL' in selected_methods:
+    print_list.append('QIN&QPL')
+else:
+    if 'QIN' in selected_methods: print_list.append('QIN')
+    if 'QPL' in selected_methods: print_list.append('QPL')
+
+# 其餘直接加
+for m in ['FCT', 'TRI', 'FF']:
+    if m in selected_methods:
+        print_list.append(m)
+
+# === 2. top_list：完全保持舊版邏輯（不合併，按原順序）===
 top_list = [item for item in top_list_default if item in selected_methods]
 st.session_state.api_called = False
 # Define the button callback
