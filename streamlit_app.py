@@ -335,13 +335,14 @@ def print_bar_chart(time_now):
       if method == 'overall':
           df = st.session_state.overall_investment_dict[method]
           change_data = st.session_state.diff_dict[method].iloc[-1]
-      elif method == 'WIN&PLA':
-          df = st.session_state.overall_investment_dict['WIN'] + st.session_state.overall_investment_dict['PLA']
-          change_data = st.session_state.diff_dict['WIN'].tail(10).sum(axis = 0) + st.session_state.diff_dict['PLA'].tail(10).sum(axis = 0)
+      elif method == 'WIN&QIN':
+          df = st.session_state.overall_investment_dict['WIN'] + st.session_state.overall_investment_dict['QIN']
+          change_data = st.session_state.diff_dict['WIN'].tail(10).sum(axis = 0) + st.session_state.diff_dict['QIN'].tail(10).sum(axis = 0)
           odds_list = st.session_state.odds_dict['WIN']
-      elif method == 'QIN&QPL':
-          df = st.session_state.overall_investment_dict['QIN'] + st.session_state.overall_investment_dict['QPL']
-          change_data = st.session_state.diff_dict['QIN'].tail(10).sum(axis = 0) + st.session_state.diff_dict['QPL'].tail(10).sum(axis = 0)
+      elif method == 'PLA&QPL':
+          df = st.session_state.overall_investment_dict['PLA'] + st.session_state.overall_investment_dict['QPL']
+          change_data = st.session_state.diff_dict['PLA'].tail(10).sum(axis = 0) + st.session_state.diff_dict['QPL'].tail(10).sum(axis = 0)
+          odds_list = st.session_state.odds_dict['PLA']
       elif method in methodlist:
           df = st.session_state.overall_investment_dict[method]
           change_data = st.session_state.diff_dict[method].tail(10).sum(axis = 0)
@@ -361,7 +362,7 @@ def print_bar_chart(time_now):
 
       change_df = pd.DataFrame([change_data.apply(lambda x: x*6 if x > 0 else x*3)],columns=change_data.index,index =[df.index[-1]])
       print(change_df)
-      if method in ['WIN', 'PLA', 'WIN&PLA']:
+      if method in ['WIN', 'PLA', 'WIN&QIN','PLA&QPL']:
         odds_list.index = pd.to_datetime(odds_list.index)
         odds_1st = odds_list[odds_list.index< time_25_minutes_before].tail(1)
         odds_2nd = odds_list[odds_list.index >= time_25_minutes_before].tail(1)
@@ -413,7 +414,7 @@ def print_bar_chart(time_now):
                 #bar = ax1.bar(X_axis+0.2,sorted_change_df.iloc[0],0.4,label='改變',color='grey')
 
       # Add numbers above bars
-      if method in ['WIN', 'PLA','WIN&PLA']:
+      if method in ['WIN', 'PLA','WIN&QIN','PLA&QPL']:
         if bars_2nd is not None:
           sorted_odds_list_2nd = odds_2nd[X].iloc[0]
           for bar, odds in zip(bars_2nd, sorted_odds_list_2nd):
@@ -448,10 +449,10 @@ def print_bar_chart(time_now):
           plt.title('獨贏', fontsize=15)
       elif method == 'PLA':
           plt.title('位置', fontsize=15)
-      elif method == 'WIN&PLA':
-          plt.title('獨贏及位置', fontsize=15)
-      elif method == 'QIN&QPL':
-          plt.title('連贏及位置Q', fontsize=15)          
+      elif method == 'WIN&QIN':
+          plt.title('獨贏及連贏', fontsize=15)
+      elif method == 'PLA&QPL':
+          plt.title('位置及位置Q', fontsize=15)          
       st.pyplot(fig)
 
 def weird_data(investments):
@@ -1017,21 +1018,21 @@ for idx, (method, method_ch) in enumerate(zip(available_methods, available_metho
 
 methodlist = selected_methods
 methodCHlist = [available_methods_ch[available_methods.index(method)] for method in selected_methods]
-# === 1. print_list：聰明合併 WIN&PLA 和 QIN&QPL ===
+# === 1. print_list：聰明合併 WIN&QIN 和 PLA&QPL ===
 print_list = []
 
-# WIN & PLA 合併
-if 'WIN' in selected_methods and 'PLA' in selected_methods:
-    print_list.append('WIN&PLA')
+# WIN & QPL 合併
+if 'WIN' in selected_methods and 'QIN' in selected_methods:
+    print_list.append('WIN&QIN')
 else:
     if 'WIN' in selected_methods: print_list.append('WIN')
-    if 'PLA' in selected_methods: print_list.append('PLA')
-
-# QIN & QPL 合併
-if 'QIN' in selected_methods and 'QPL' in selected_methods:
-    print_list.append('QIN&QPL')
-else:
     if 'QIN' in selected_methods: print_list.append('QIN')
+
+# PLA & QPL 合併
+if 'PLA' in selected_methods and 'QPL' in selected_methods:
+    print_list.append('PLA&QPL')
+else:
+    if 'PLA' in selected_methods: print_list.append('PLA')
     if 'QPL' in selected_methods: print_list.append('QPL')
 
 # 其餘直接加
