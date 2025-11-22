@@ -1375,7 +1375,7 @@ if st.session_state.reset:
     while time.time() <= end_time:
         with placeholder.container():
             
-            time_now = datetime.now() + datere.relativedelta(hours=19.5)
+            time_now = datetime.now() + datere.relativedelta(hours=19.75)
             odds = get_odds_data()
             investments = get_investment_data()
             main(time_now, odds, investments, period=2)
