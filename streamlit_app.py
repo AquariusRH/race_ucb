@@ -337,15 +337,18 @@ def print_bar_chart(time_now):
           change_data = st.session_state.diff_dict[method].iloc[-1]
       elif method == 'WIN&QIN':
           df = st.session_state.overall_investment_dict['WIN'] + st.session_state.overall_investment_dict['QIN']
-          change_data = st.session_state.diff_dict['WIN'].tail(10).sum(axis = 0) + st.session_state.diff_dict['QIN'].tail(10).sum(axis = 0)
+          change_data_1 = st.session_state.diff_dict['WIN'].tail(10).sum(axis = 0) 
+          change_data_2 = st.session_state.diff_dict['QIN'].tail(10).sum(axis = 0)
           odds_list = st.session_state.odds_dict['WIN']
       elif method == 'PLA&QPL':
           df = st.session_state.overall_investment_dict['PLA'] + st.session_state.overall_investment_dict['QPL']
-          change_data = st.session_state.diff_dict['PLA'].tail(10).sum(axis = 0) + st.session_state.diff_dict['QPL'].tail(10).sum(axis = 0)
+          change_data_1 = st.session_state.diff_dict['PLA'].tail(10).sum(axis=0)
+          change_data_2 = st.session_state.diff_dict['QPL'].tail(10).sum(axis=0)
           odds_list = st.session_state.odds_dict['PLA']
       elif method in methodlist:
           df = st.session_state.overall_investment_dict[method]
-          change_data = st.session_state.diff_dict[method].tail(10).sum(axis = 0)
+          change_data_1 = st.session_state.diff_dict[method].tail(10).sum(axis = 0)
+          change_data_2 = pd.Series(0, index=df.columns)
           odds_list = st.session_state.odds_dict[method]
       if df.empty:
         continue
@@ -359,9 +362,13 @@ def print_bar_chart(time_now):
       df_1st_2nd = df[df.index >= time_25_minutes_before].head(1)
       df_2nd = df[df.index >= time_25_minutes_before].tail(1)
       df_3rd = df[df.index>= time_5_minutes_before].tail(1)
-
-      change_df = pd.DataFrame([change_data.apply(lambda x: x*6 if x > 0 else x*3)],columns=change_data.index,index =[df.index[-1]])
-      print(change_df)
+      
+      change_data_1 = change_data_1.apply(lambda x: x*6 if x > 0 else x*3)
+      change_data_2 = change_data_2.apply(lambda x: x*6 if x > 0 else x*3)  
+      
+      change_df = pd.DataFrame([change_data_1, change_data_2],
+                               index=['layer1', 'layer2'],
+                               columns=change_data_1.index)
       if method in ['WIN', 'PLA', 'WIN&QIN','PLA&QPL']:
         odds_list.index = pd.to_datetime(odds_list.index)
         odds_1st = odds_list[odds_list.index< time_25_minutes_before].tail(1)
@@ -388,7 +395,8 @@ def print_bar_chart(time_now):
       diff[diff < 0] = 0
       X = sorted_final_data_df.columns
       X_axis = np.arange(len(X))
-      sorted_change_df = change_df[X]
+      sorted_change_1 = change_df.loc['layer1'][X]
+      sorted_change_2 = change_df.loc['layer2'][X]
       if df_3rd.empty:
                   bar_colour = 'blue'
       else:
@@ -398,7 +406,11 @@ def print_bar_chart(time_now):
                 bars_1st = ax1.bar(X_axis, sorted_final_data_df.iloc[0], 0.4, label='投注額', color='pink')
           else:
                 bars_2nd = ax1.bar(X_axis - 0.2, sorted_final_data_df.iloc[1], 0.4, label='25分鐘', color=bar_colour)
-                bar = ax1.bar(X_axis+0.2,sorted_change_df.iloc[0],0.4,label='改變',color='grey')
+                bar = ax1.bar(X_axis+0.2,sorted_change_1.iloc[0],0.4,label='改變',color='grey')
+                if not sorted_change_2.empty:
+                    bar = ax1.bar(X_axis+0.2,sorted_change_2.clip(lower=0).iloc[0],0.4,label='改變',color='grey',bottom = sorted_change_1.clip(lower=0))
+                    bar = ax1.bar(X_axis+0.2,sorted_change_2.clip(upper=0).iloc[0],0.4,label='改變',color='grey',bottom = sorted_change_1.clip(upper=0))
+                    
                 #if not df_3rd.empty:
                     #bars_3rd = ax1.bar(X_axis, diff.iloc[0], 0.3, label='5分鐘', color='red')
       else:
@@ -406,7 +418,10 @@ def print_bar_chart(time_now):
               bars_2nd = ax1.bar(X_axis - 0.2, sorted_final_data_df.iloc[0], 0.4, label='25分鐘', color=bar_colour)
             else:
                 bars_2nd = ax1.bar(X_axis - 0.2, sorted_final_data_df.iloc[1], 0.4, label='25分鐘', color=bar_colour)
-                bar = ax1.bar(X_axis+0.2,sorted_change_df.iloc[0],0.4,label='改變',color='grey')
+                bar = ax1.bar(X_axis+0.2,sorted_change_1.iloc[0],0.4,label='改變',color='grey')
+                if not sorted_change_2.empty:
+                    bar = ax1.bar(X_axis+0.2,sorted_change_2.clip(lower=0).iloc[0],0.4,label='改變',color='grey',bottom = sorted_change_1.clip(lower=0))
+                    bar = ax1.bar(X_axis+0.2,sorted_change_2.clip(upper=0).iloc[0],0.4,label='改變',color='grey',bottom = sorted_change_1.clip(upper=0))
                 #if not df_3rd.empty:
                     #bars_3rd = ax1.bar(X_axis, diff.iloc[0], 0.3, label='5分鐘', color='red')
             #else:
