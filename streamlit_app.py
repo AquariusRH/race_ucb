@@ -362,13 +362,10 @@ def print_bar_chart(time_now):
       df_1st_2nd = df[df.index >= time_25_minutes_before].head(1)
       df_2nd = df[df.index >= time_25_minutes_before].tail(1)
       df_3rd = df[df.index>= time_5_minutes_before].tail(1)
-      
-      change_data_1 = change_data_1.apply(lambda x: x*6 if x > 0 else x*3)
-      change_data_2 = change_data_2.apply(lambda x: x*6 if x > 0 else x*3)  
-      
-      change_df = pd.DataFrame([change_data_1, change_data_2],
-                               index=['layer1', 'layer2'],
-                               columns=change_data_1.index)
+       
+      change_df_1 = pd.DataFrame([change_data_1.apply(lambda x: x*6 if x > 0 else x*3)],columns=change_data_1.index,index =[df.index[-1]])
+      change_df_2 = pd.DataFrame([change_data_2.apply(lambda x: x*6 if x > 0 else x*3)],columns=change_data_2.index,index =[df.index[-1]])
+
       if method in ['WIN', 'PLA', 'WIN&QIN','PLA&QPL']:
         odds_list.index = pd.to_datetime(odds_list.index)
         odds_1st = odds_list[odds_list.index< time_25_minutes_before].tail(1)
@@ -395,8 +392,8 @@ def print_bar_chart(time_now):
       diff[diff < 0] = 0
       X = sorted_final_data_df.columns
       X_axis = np.arange(len(X))
-      sorted_change_1 = change_df.loc['layer1'][X]
-      sorted_change_2 = change_df.loc['layer2'][X]
+      sorted_change_1 = change_df_1[X]
+      sorted_change_2 = change_df_2[X]
       if df_3rd.empty:
                   bar_colour = 'blue'
       else:
