@@ -403,10 +403,10 @@ def print_bar_chart(time_now):
                 bars_1st = ax1.bar(X_axis, sorted_final_data_df.iloc[0], 0.4, label='投注額', color='pink')
           else:
                 bars_2nd = ax1.bar(X_axis - 0.2, sorted_final_data_df.iloc[1], 0.4, label='25分鐘', color=bar_colour)
-                bar = ax1.bar(X_axis+0.2,sorted_change_1.iloc[0],0.4,label='改變',color='grey')
+                bar = ax1.bar(X_axis+0.2,sorted_change_1.iloc[0],0.4,label='WIN/PLA改變',color='grey')
                 if not sorted_change_2.empty:
-                    bar = ax1.bar(X_axis+0.2,sorted_change_2.clip(lower=0),0.4,label='改變',color='blue',bottom = sorted_change_1.clip(lower=0))
-                    bar = ax1.bar(X_axis+0.2,sorted_change_2.clip(upper=0),0.4,label='改變',color='blue',bottom = sorted_change_1.clip(upper=0))
+                    bar = ax1.bar(X_axis+0.2,sorted_change_2.iloc[0].clip(lower=0),0.4,label='QIN/QPL改變',color='blue',bottom = sorted_change_1.iloc[0].clip(lower=0))
+                    bar = ax1.bar(X_axis+0.2,sorted_change_2.iloc[0].clip(upper=0),0.4,label='QIN/QPL改變',color='blue',bottom = sorted_change_1.iloc[0].clip(upper=0))
                     
                 #if not df_3rd.empty:
                     #bars_3rd = ax1.bar(X_axis, diff.iloc[0], 0.3, label='5分鐘', color='red')
@@ -415,10 +415,10 @@ def print_bar_chart(time_now):
               bars_2nd = ax1.bar(X_axis - 0.2, sorted_final_data_df.iloc[0], 0.4, label='25分鐘', color=bar_colour)
             else:
                 bars_2nd = ax1.bar(X_axis - 0.2, sorted_final_data_df.iloc[1], 0.4, label='25分鐘', color=bar_colour)
-                bar = ax1.bar(X_axis+0.2,sorted_change_1.iloc[0],0.4,label='改變',color='grey')
+                bar = ax1.bar(X_axis+0.2,sorted_change_1.iloc[0],0.4,label='WIN/PLA改變',color='grey')
                 if not sorted_change_2.empty:
-                    bar = ax1.bar(X_axis+0.2,sorted_change_2.clip(lower=0),0.4,label='改變',color='blue',bottom = sorted_change_1.clip(lower=0))
-                    bar = ax1.bar(X_axis+0.2,sorted_change_2.clip(upper=0),0.4,label='改變',color='blue',bottom = sorted_change_1.clip(upper=0))
+                    bar = ax1.bar(X_axis+0.2,sorted_change_2.iloc[0].clip(lower=0),0.4,label='QIN/QPL改變',color='blue',bottom = sorted_change_1.iloc[0].clip(lower=0))
+                    bar = ax1.bar(X_axis+0.2,sorted_change_2.iloc[0].clip(upper=0),0.4,label='QIN/QPL改變',color='blue',bottom = sorted_change_1.iloc[0].clip(upper=0))
                 #if not df_3rd.empty:
                     #bars_3rd = ax1.bar(X_axis, diff.iloc[0], 0.3, label='5分鐘', color='red')
             #else:
