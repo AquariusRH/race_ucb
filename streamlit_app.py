@@ -1074,8 +1074,7 @@ def print_bubble():
             yaxis=dict(tickformat=",", zeroline=True),
         )
         
-        with st.session_state.bubble_placeholder.container():
-            st.plotly_chart(fig, use_container_width=True)   
+        st.plotly_chart(fig, use_container_width=True)   
 
 def main(time_now,odds,investments,period):
   save_odds_data(time_now,odds)
@@ -1451,8 +1450,6 @@ if st.session_state.reset:
                 'history': {},
                 'top4_history': {}
             }
-    if 'bubble_placeholder' not in st.session_state:
-        st.session_state.bubble_placeholder = st.empty()
 
     # 開始監測
     start_time = time.time()
