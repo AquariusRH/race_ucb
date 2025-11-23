@@ -1022,59 +1022,65 @@ def print_bubble():
         # 假設你已經有 df_plot（跟前面一樣）
         df_plot = df[df['總投注量'] > 0].copy()
         
-        # 氣泡大小正規化（20 ~ 100）
-        raw_size = df_plot['總投注量']
-        bubble_size = 20 + (raw_size - raw_size.min()) / (raw_size.max() - raw_size.min() + 1e-6) * 80
-        df_plot['bubble'] = bubble_size
-        max_bubble = bubble_size.max()
-        # 5. 畫圖（退賽馬完全不會出現）
-        fig = go.Figure()
-        
-        fig.add_trace(go.Scatter(
-            x=df['ΔQ'][df['visible']],
-            y=df['ΔI'][df['visible']],
-            mode='markers+text',
-            text=df['horse'][df['visible']],
-            textposition="middle center",
-            textfont=dict(color="white", size=14, family="Arial Black", weight="bold"),
-            marker=dict(
-                size=df_plot['bubble'],          # 1. 氣泡大小（20~100）
-                sizemode='area',               # 2. 超重要！面積比例（才是真氣泡感）
-                sizeref=2.*max_bubble/(100**2),  # 3. 讓最大氣泡剛好是你設的 100（下面會解釋）
-                opacity=0.78,                  # 4. 透明度（讓重疊時有層次）
-                color=df_plot['ΔI'],
-                colorscale='RdBu',
-                reversescale=True,
-                line=dict(width=2.5, color='white'),   # 5. 白色邊框 → 經典氣泡質感
-                symbol='circle',               # 6. 強制圓形（預防被改）
-            ),
-            hovertemplate=
-                "<b>馬號：%{text}</b><br>" +
-                "庫存差距：%{y:+,} K<br>" +
-                "理想差距：%{x:+,} K<br>" +
-                "總投注量：%{customdata:,} K<extra></extra>",
-            customdata=df['總投注量'][df['visible']].values
-        ))
-        
-        
-        # 四象限線
-        fig.add_hline(y=0, line_color="black", line_width=1.5)
-        fig.add_vline(x=0, line_color="black", line_width=1.5)
-        
-        fig.update_layout(
-            title=f"{method}氣泡圖",
-            xaxis_title="與理想投注額差距（K）",
-            yaxis_title="庫存部位差距（K）",
-            template="plotly_white",
-            height=720,
-            width=900,
-            showlegend=False,
-            font=dict(family="Microsoft JhengHei", size=14),
-            xaxis=dict(tickformat=",", zeroline=True),
-            yaxis=dict(tickformat=",", zeroline=True),
-        )
-        
-        st.plotly_chart(fig, use_container_width=True)   
+        # === 氣泡大小（25~110）===
+    sizes = df_plot['總投注量']
+    bubble_sizes = 25 + (sizes - sizes.min()) / (sizes.max() - sizes.min() + 1e-6) * 85
+    # matplotlib 要平方才像真氣泡
+    plot_sizes = bubble_sizes ** 2 * 8
+    
+    # === 開始畫圖（每次都全新畫一張，乾淨俐落）===
+    fig = plt.figure(figsize=(10, 10), facecolor='white')
+    ax = fig.add_subplot(111)
+    
+    # 強制正方形 + 正圓氣泡
+    ax.set_aspect('equal', adjustable='box')
+    
+    # 十字軸（永遠固定在中間）
+    ax.axhline(0, color='black', linewidth=3, zorder=5)
+    ax.axvline(0, color='black', linewidth=3, zorder=5)
+    
+    # 畫氣泡（紅藍自動分）
+    scatter = ax.scatter(
+        df_plot['ΔQ'], df_plot['ΔI'],
+        s=plot_sizes,
+        c=df_plot['ΔI'],
+        cmap='RdBu_r',
+        alpha=0.82,
+        edgecolors='white',
+        linewidths=3.5,
+        zorder=10
+    )
+    
+    # 馬號寫在正中間（粗白字）
+    for _, row in df_plot.iterrows():
+        ax.text(row['ΔQ'], row['ΔI'], row['horse'],
+                ha='center', va='center',
+                fontsize=15, fontweight='bold', color='white',
+                zorder=20)
+    
+    # 自動邊界（十字永遠在中間）
+    margin = max(abs(df_plot['ΔQ']).max(), abs(df_plot['ΔI']).max()) * 0.3
+    margin = max(margin, 300)  # 至少留點空間
+    ax.set_xlim(-margin - df_plot['ΔQ'].max()*0.1, margin + df_plot['ΔQ'].max()*0.1)
+    ax.set_ylim(-margin - df_plot['ΔI'].max()*0.1, margin + df_plot['ΔI'].max()*0.1)
+    
+    # 美化
+    ax.set_xlabel('與理想投注額差距（張）', fontsize=16)
+    ax.set_ylabel('庫存部位差距（張）', fontsize=16)
+    ax.grid(True, alpha=0.25, zorder=0)
+    
+    # 標題 + 退賽馬
+    withdrawn = df[df['總投注量'] == 0]['horse'].tolist()
+    title = "賽馬即時氣泡圖（matplotlib 純粹版）"
+    if withdrawn:
+        title += f"　　退賽：{', '.join(withdrawn)}"
+    ax.set_title(title, fontsize=20, pad=25)
+    
+    # 背景微微透明
+    fig.patch.set_facecolor('#fafafa')
+    
+    # === 直接輸出！完全不閃、不會重複、不用任何 state ===
+    st.pyplot(fig, use_container_width=True)
 
 def main(time_now,odds,investments,period):
   save_odds_data(time_now,odds)
