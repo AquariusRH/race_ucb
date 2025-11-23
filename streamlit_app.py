@@ -1036,13 +1036,15 @@ def print_bubble():
             textposition="middle center",
             textfont=dict(color="white", size=14, family="Arial Black", weight="bold"),
             marker=dict(
-                size=df['size'][df['visible']],
-                sizemode='area',
-                color=df['ΔI'][df['visible']],
+                size=df['size'],          # 1. 氣泡大小（20~100）
+                sizemode='area',               # 2. 超重要！面積比例（才是真氣泡感）
+                sizeref=2.*max_size/(100**2),  # 3. 讓最大氣泡剛好是你設的 100（下面會解釋）
+                opacity=0.78,                  # 4. 透明度（讓重疊時有層次）
+                color=df_plot['ΔI'],
                 colorscale='RdBu',
                 reversescale=True,
-                line=dict(width=2, color='black'),
-                opacity=0.92
+                line=dict(width=2.5, color='white'),   # 5. 白色邊框 → 經典氣泡質感
+                symbol='circle',               # 6. 強制圓形（預防被改）
             ),
             hovertemplate=
                 "<b>馬號：%{text}</b><br>" +
@@ -1052,24 +1054,13 @@ def print_bubble():
             customdata=df['總投注量'][df['visible']].values
         ))
         
-        # 退賽馬只留一個極淡的灰色小標記（可選：完全不畫就刪下面這段）
-        fig.add_trace(go.Scatter(
-            x=df['ΔQ'][~df['visible']],
-            y=df['ΔI'][~df['visible']],
-            mode='text',
-            text=df['horse'][~df['visible']],
-            textposition="middle center",
-            textfont=dict(color="lightgray", size=10),
-            hoverinfo='skip',
-            showlegend=False
-        ))
         
         # 四象限線
         fig.add_hline(y=0, line_color="black", line_width=1.5)
         fig.add_vline(x=0, line_color="black", line_width=1.5)
         
         fig.update_layout(
-            title="賽馬即時盤口氣泡圖（退賽馬自動消失）",
+            title=f"{method}氣泡圖",
             xaxis_title="與理想投注額差距（K）",
             yaxis_title="庫存部位差距（K）",
             template="plotly_white",
