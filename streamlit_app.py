@@ -1013,8 +1013,8 @@ def print_bubble():
     total_volume = total_volume_raw.copy()          
     df = pd.DataFrame({
         'horse': total_volume.columns.astype(str),
-        'ΔI': delta_I.values.round(0).astype(float),
-        'ΔQ': delta_Q.values.round(0).astype(float),
+        'ΔI': delta_I.round(0).astype(float),
+        'ΔQ': delta_Q.round(0).astype(float),
         '總投注量': total_volume.values.round(0).astype(int)
         })     
     # 4. 退賽馬直接不顯示氣泡（size 設為 0）＋淡化文字
