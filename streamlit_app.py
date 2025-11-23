@@ -1029,7 +1029,7 @@ def print_bubble():
         plot_sizes = bubble_sizes ** 2 * 8
         
         # === 開始畫圖（每次都全新畫一張，乾淨俐落）===
-        fig = plt.figure(figsize=(10, 10), facecolor='white')
+        fig = plt.figure(figsize=(12, 6), facecolor='white')
         ax = fig.add_subplot(111)
         
         # 強制正方形 + 正圓氣泡
@@ -1065,8 +1065,8 @@ def print_bubble():
         ax.set_ylim(-margin - df_plot['ΔI'].max()*0.1, margin + df_plot['ΔI'].max()*0.1)
         
         # 美化
-        ax.set_xlabel('與理想投注額差距（張）', fontsize=16)
-        ax.set_ylabel('庫存部位差距（張）', fontsize=16)
+        ax.set_xlabel('WIN/PLA（K）', fontsize=16)
+        ax.set_ylabel('QIN/QPL（K）', fontsize=16)
         ax.grid(True, alpha=0.25, zorder=0)
         
         # 標題 + 退賽馬
