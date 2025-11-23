@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 import matplotlib
 import json
 import os
-
+import plotly.graph_objects as go
 matplotlib.font_manager.fontManager.addfont('TaipeiSansTCBeta-Regular.ttf')
 matplotlib.rc('font', family='Taipei Sans TC Beta')
 from warnings import simplefilter
