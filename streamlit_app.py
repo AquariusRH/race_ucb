@@ -996,92 +996,92 @@ def print_momentum():
 
 def print_bubble():
     for method in print_list:
-          odds_list = pd.DataFrame()
-          total_volume_raw = pd.DataFrame()
-          if method == 'WIN&QIN':
+        odds_list = pd.DataFrame()
+        total_volume_raw = pd.DataFrame()
+        if method == 'WIN&QIN':
               total_volume_raw = st.session_state.overall_investment_dict['WIN'] + st.session_state.overall_investment_dict['QIN']
               delta_I = st.session_state.diff_dict['WIN'].tail(10).sum(axis = 0) 
               delta_Q = st.session_state.diff_dict['QIN'].tail(10).sum(axis = 0)
               odds_list = st.session_state.odds_dict['WIN']
-          elif method == 'PLA&QPL':
+        elif method == 'PLA&QPL':
               total_volume_raw = st.session_state.overall_investment_dict['PLA'] + st.session_state.overall_investment_dict['QPL']
               delta_I = st.session_state.diff_dict['PLA'].tail(10).sum(axis=0)
               delta_Q = st.session_state.diff_dict['QPL'].tail(10).sum(axis=0)
               odds_list = st.session_state.odds_dict['PLA']
-          if total_volume_raw.empty:
+        if total_volume_raw.empty:
             continue
-    total_volume = total_volume_raw.copy()          
-    df = pd.DataFrame({
-        'horse': total_volume.columns.astype(str),
-        'ΔI': delta_I.round(0).astype(float),
-        'ΔQ': delta_Q.round(0).astype(float),
-        '總投注量': total_volume.iloc[0].round(0).astype(int)
-        })     
-    # 4. 退賽馬直接不顯示氣泡（size 設為 0）＋淡化文字
-    df['visible'] = df['總投注量'] > 0                                 # 退賽馬 = False
-    df['size'] = np.where(
-        df['visible'],
-        20 + (df['總投注量'] - df['總投注量'][df['visible']].min()) / 
-             (df['總投注量'][df['visible']].max() - df['總投注量'][df['visible']].min() + 1) * 80,
-        0  # 退賽馬氣泡大小直接歸 0
-    )
-    # 5. 畫圖（退賽馬完全不會出現）
-    fig = go.Figure()
-    
-    fig.add_trace(go.Scatter(
-        x=df['ΔQ'][df['visible']],
-        y=df['ΔI'][df['visible']],
-        mode='markers+text',
-        text=df['horse'][df['visible']],
-        textposition="middle center",
-        textfont=dict(color="white", size=14, family="Arial Black", weight="bold"),
-        marker=dict(
-            size=df['size'][df['visible']],
-            sizemode='area',
-            color=df['ΔI'][df['visible']],
-            colorscale='RdBu',
-            reversescale=True,
-            line=dict(width=2, color='black'),
-            opacity=0.92
-        ),
-        hovertemplate=
-            "<b>馬號：%{text}</b><br>" +
-            "庫存差距：%{y:+,} 張<br>" +
-            "理想差距：%{x:+,} 張<br>" +
-            "總投注量：%{customdata:,} 張<extra></extra>",
-        customdata=df['總投注量'][df['visible']].values
-    ))
-    
-    # 退賽馬只留一個極淡的灰色小標記（可選：完全不畫就刪下面這段）
-    fig.add_trace(go.Scatter(
-        x=df['ΔQ'][~df['visible']],
-        y=df['ΔI'][~df['visible']],
-        mode='text',
-        text=df['horse'][~df['visible']],
-        textposition="middle center",
-        textfont=dict(color="lightgray", size=10),
-        hoverinfo='skip',
-        showlegend=False
-    ))
-    
-    # 四象限線
-    fig.add_hline(y=0, line_color="black", line_width=1.5)
-    fig.add_vline(x=0, line_color="black", line_width=1.5)
-    
-    fig.update_layout(
-        title="賽馬即時盤口氣泡圖（退賽馬自動消失）",
-        xaxis_title="與理想投注額差距（張）",
-        yaxis_title="庫存部位差距（張）",
-        template="plotly_white",
-        height=720,
-        width=900,
-        showlegend=False,
-        font=dict(family="Microsoft JhengHei", size=14),
-        xaxis=dict(tickformat=",", zeroline=True),
-        yaxis=dict(tickformat=",", zeroline=True),
-    )
-    
-    st.plotly_chart(fig, use_container_width=True)
+        total_volume = total_volume_raw.copy()          
+        df = pd.DataFrame({
+            'horse': total_volume.columns.astype(str),
+            'ΔI': delta_I.round(0).astype(float),
+            'ΔQ': delta_Q.round(0).astype(float),
+            '總投注量': total_volume.iloc[0].round(0).astype(int)
+            })     
+        # 4. 退賽馬直接不顯示氣泡（size 設為 0）＋淡化文字
+        df['visible'] = df['總投注量'] > 0                                 # 退賽馬 = False
+        df['size'] = np.where(
+            df['visible'],
+            20 + (df['總投注量'] - df['總投注量'][df['visible']].min()) / 
+                 (df['總投注量'][df['visible']].max() - df['總投注量'][df['visible']].min() + 1) * 80,
+            0  # 退賽馬氣泡大小直接歸 0
+        )
+        # 5. 畫圖（退賽馬完全不會出現）
+        fig = go.Figure()
+        
+        fig.add_trace(go.Scatter(
+            x=df['ΔQ'][df['visible']],
+            y=df['ΔI'][df['visible']],
+            mode='markers+text',
+            text=df['horse'][df['visible']],
+            textposition="middle center",
+            textfont=dict(color="white", size=14, family="Arial Black", weight="bold"),
+            marker=dict(
+                size=df['size'][df['visible']],
+                sizemode='area',
+                color=df['ΔI'][df['visible']],
+                colorscale='RdBu',
+                reversescale=True,
+                line=dict(width=2, color='black'),
+                opacity=0.92
+            ),
+            hovertemplate=
+                "<b>馬號：%{text}</b><br>" +
+                "庫存差距：%{y:+,} K<br>" +
+                "理想差距：%{x:+,} K<br>" +
+                "總投注量：%{customdata:,} 張<extra></extra>",
+            customdata=df['總投注量'][df['visible']].values
+        ))
+        
+        # 退賽馬只留一個極淡的灰色小標記（可選：完全不畫就刪下面這段）
+        fig.add_trace(go.Scatter(
+            x=df['ΔQ'][~df['visible']],
+            y=df['ΔI'][~df['visible']],
+            mode='text',
+            text=df['horse'][~df['visible']],
+            textposition="middle center",
+            textfont=dict(color="lightgray", size=10),
+            hoverinfo='skip',
+            showlegend=False
+        ))
+        
+        # 四象限線
+        fig.add_hline(y=0, line_color="black", line_width=1.5)
+        fig.add_vline(x=0, line_color="black", line_width=1.5)
+        
+        fig.update_layout(
+            title="賽馬即時盤口氣泡圖（退賽馬自動消失）",
+            xaxis_title="與理想投注額差距（K）",
+            yaxis_title="庫存部位差距（K）",
+            template="plotly_white",
+            height=720,
+            width=900,
+            showlegend=False,
+            font=dict(family="Microsoft JhengHei", size=14),
+            xaxis=dict(tickformat=",", zeroline=True),
+            yaxis=dict(tickformat=",", zeroline=True),
+        )
+        
+        st.plotly_chart(fig, use_container_width=True)
 
 def main(time_now,odds,investments,period):
   save_odds_data(time_now,odds)
