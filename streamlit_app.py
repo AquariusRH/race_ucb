@@ -1029,7 +1029,7 @@ def print_bubble():
         plot_sizes = bubble_sizes ** 2 * 8
         
         # === 開始畫圖（每次都全新畫一張，乾淨俐落）===
-        fig = plt.figure(figsize=(12, 6), facecolor='white')
+        fig = plt.figure(figsize=(120, 60), facecolor='white')
         ax = fig.add_subplot(111)
         
         # 強制正方形 + 正圓氣泡
