@@ -1138,8 +1138,6 @@ for m in ['FCT', 'TRI', 'FF']:
 # === 2. top_list：完全保持舊版邏輯（不合併，按原順序）===
 top_list = [item for item in top_list_default if item in selected_methods]
 st.session_state.api_called = False
-if 'bubble_placeholder' not in st.session_state:
-    st.session_state.bubble_placeholder = st.empty()
 # Define the button callback
 def click_start_button():
     st.session_state.reset = True
@@ -1452,6 +1450,8 @@ if st.session_state.reset:
                 'history': {},
                 'top4_history': {}
             }
+    if 'bubble_placeholder' not in st.session_state:
+        st.session_state.bubble_placeholder = st.empty()
 
     # 開始監測
     start_time = time.time()
