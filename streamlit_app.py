@@ -1015,7 +1015,7 @@ def print_bubble():
         'horse': total_volume.columns.astype(str),
         'ΔI': delta_I.round(0).astype(float),
         'ΔQ': delta_Q.round(0).astype(float),
-        #'總投注量': total_volume.values.round(0).astype(int)
+        '總投注量': total_volume.round(0).astype(int)
         })     
     # 4. 退賽馬直接不顯示氣泡（size 設為 0）＋淡化文字
     df['visible'] = df['總投注量'] > 0                                 # 退賽馬 = False
