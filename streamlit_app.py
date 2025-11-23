@@ -1040,7 +1040,7 @@ def print_bubble():
             marker=dict(
                 size=df_plot['bubble'],          # 1. 氣泡大小（20~100）
                 sizemode='area',               # 2. 超重要！面積比例（才是真氣泡感）
-                sizeref=2.*max_size/(100**2),  # 3. 讓最大氣泡剛好是你設的 100（下面會解釋）
+                sizeref=2.*max_bubble/(100**2),  # 3. 讓最大氣泡剛好是你設的 100（下面會解釋）
                 opacity=0.78,                  # 4. 透明度（讓重疊時有層次）
                 color=df_plot['ΔI'],
                 colorscale='RdBu',
