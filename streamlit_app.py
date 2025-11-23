@@ -1010,6 +1010,7 @@ def print_bubble():
               odds_list = st.session_state.odds_dict['PLA']
           if total_volume_raw.empty:
             continue
+    total_volume = total_volume_raw.copy()          
     df = pd.DataFrame({
         'horse': total_volume.index.astype(str),
         'ΔI': delta_I.values.round(0).astype(float),
