@@ -1073,7 +1073,7 @@ def print_bubble():
             xaxis=dict(tickformat=",", zeroline=True),
             yaxis=dict(tickformat=",", zeroline=True),
         )
-        st.plotly_chart(fig, use_container_width=True,key=total_volume_raw.index.astype(str))  
+        st.plotly_chart(fig, use_container_width=True,, on_select="ignore", key="my_plotly_chart")  
 
 def main(time_now,odds,investments,period):
   save_odds_data(time_now,odds)
