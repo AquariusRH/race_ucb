@@ -1052,7 +1052,7 @@ def print_bubble():
                 "<b>馬號：%{text}</b><br>" +
                 "庫存差距：%{y:+,} K<br>" +
                 "理想差距：%{x:+,} K<br>" +
-                "總投注量：%{customdata:,} 張<extra></extra>",
+                "總投注量：%{customdata:,} K<extra></extra>",
             customdata=df['總投注量'][df['visible']].values
         ))
         
@@ -1074,7 +1074,7 @@ def print_bubble():
             yaxis=dict(tickformat=",", zeroline=True),
         )
         
-        st.plotly_chart(fig, use_container_width=True)
+        st.session_state.bubble_placeholder.plotly_chart(fig, use_container_width=True)    
 
 def main(time_now,odds,investments,period):
   save_odds_data(time_now,odds)
@@ -1138,6 +1138,8 @@ for m in ['FCT', 'TRI', 'FF']:
 # === 2. top_list：完全保持舊版邏輯（不合併，按原順序）===
 top_list = [item for item in top_list_default if item in selected_methods]
 st.session_state.api_called = False
+if 'bubble_placeholder' not in st.session_state:
+    st.session_state.bubble_placeholder = st.empty()
 # Define the button callback
 def click_start_button():
     st.session_state.reset = True
