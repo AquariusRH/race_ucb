@@ -1031,8 +1031,8 @@ def print_bubble():
         fig = go.Figure()
 
         fig.add_trace(go.Scatter(
-            x=df['ΔQ'][df['visible']],
-            y=df['ΔI'][df['visible']],
+            x=df['ΔI'][df['visible']],
+            y=df['ΔQ'][df['visible']],
             mode='markers+text',
             text=df['horse'][df['visible']],
             textposition="middle center",
