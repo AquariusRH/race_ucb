@@ -1074,7 +1074,8 @@ def print_bubble():
             yaxis=dict(tickformat=",", zeroline=True),
         )
         
-        st.session_state.bubble_placeholder.plotly_chart(fig, use_container_width=True)    
+       with st.session_state.bar_container.container():
+            st.plotly_chart(fig, use_container_width=True)   
 
 def main(time_now,odds,investments,period):
   save_odds_data(time_now,odds)
