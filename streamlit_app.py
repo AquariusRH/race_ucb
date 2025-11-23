@@ -1019,12 +1019,14 @@ def print_bubble():
             })     
         # 4. 退賽馬直接不顯示氣泡（size 設為 0）＋淡化文字
         df['visible'] = df['總投注量'] > 0                                 # 退賽馬 = False
-        df['size'] = np.where(
-            df['visible'],
-            20 + (df['總投注量'] - df['總投注量'][df['visible']].min()) / 
-                 (df['總投注量'][df['visible']].max() - df['總投注量'][df['visible']].min() + 1) * 80,
-            0  # 退賽馬氣泡大小直接歸 0
-        )
+        # 假設你已經有 df_plot（跟前面一樣）
+        df_plot = df[df['總投注量'] > 0].copy()
+        
+        # 氣泡大小正規化（20 ~ 100）
+        raw_size = df_plot['總投注量']
+        bubble_size = 20 + (raw_size - raw_size.min()) / (raw_size.max() - raw_size.min() + 1e-6) * 80
+        df_plot['bubble'] = bubble_size
+        max_bubble = bubble_size.max()
         # 5. 畫圖（退賽馬完全不會出現）
         fig = go.Figure()
         
@@ -1036,7 +1038,7 @@ def print_bubble():
             textposition="middle center",
             textfont=dict(color="white", size=14, family="Arial Black", weight="bold"),
             marker=dict(
-                size=df['size'],          # 1. 氣泡大小（20~100）
+                size=df_plot['bubble'],          # 1. 氣泡大小（20~100）
                 sizemode='area',               # 2. 超重要！面積比例（才是真氣泡感）
                 sizeref=2.*max_size/(100**2),  # 3. 讓最大氣泡剛好是你設的 100（下面會解釋）
                 opacity=0.78,                  # 4. 透明度（讓重疊時有層次）
