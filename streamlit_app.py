@@ -1023,64 +1023,62 @@ def print_bubble():
         df_plot = df[df['總投注量'] > 0].copy()
         
         # === 氣泡大小（25~110）===
-    sizes = df_plot['總投注量']
-    bubble_sizes = 25 + (sizes - sizes.min()) / (sizes.max() - sizes.min() + 1e-6) * 85
-    # matplotlib 要平方才像真氣泡
-    plot_sizes = bubble_sizes ** 2 * 8
-    
-    # === 開始畫圖（每次都全新畫一張，乾淨俐落）===
-    fig = plt.figure(figsize=(10, 10), facecolor='white')
-    ax = fig.add_subplot(111)
-    
-    # 強制正方形 + 正圓氣泡
-    ax.set_aspect('equal', adjustable='box')
-    
-    # 十字軸（永遠固定在中間）
-    ax.axhline(0, color='black', linewidth=3, zorder=5)
-    ax.axvline(0, color='black', linewidth=3, zorder=5)
-    
-    # 畫氣泡（紅藍自動分）
-    scatter = ax.scatter(
-        df_plot['ΔQ'], df_plot['ΔI'],
-        s=plot_sizes,
-        c=df_plot['ΔI'],
-        cmap='RdBu_r',
-        alpha=0.82,
-        edgecolors='white',
-        linewidths=3.5,
-        zorder=10
-    )
-    
-    # 馬號寫在正中間（粗白字）
-    for _, row in df_plot.iterrows():
-        ax.text(row['ΔQ'], row['ΔI'], row['horse'],
-                ha='center', va='center',
-                fontsize=15, fontweight='bold', color='white',
-                zorder=20)
-    
-    # 自動邊界（十字永遠在中間）
-    margin = max(abs(df_plot['ΔQ']).max(), abs(df_plot['ΔI']).max()) * 0.3
-    margin = max(margin, 300)  # 至少留點空間
-    ax.set_xlim(-margin - df_plot['ΔQ'].max()*0.1, margin + df_plot['ΔQ'].max()*0.1)
-    ax.set_ylim(-margin - df_plot['ΔI'].max()*0.1, margin + df_plot['ΔI'].max()*0.1)
-    
-    # 美化
-    ax.set_xlabel('與理想投注額差距（張）', fontsize=16)
-    ax.set_ylabel('庫存部位差距（張）', fontsize=16)
-    ax.grid(True, alpha=0.25, zorder=0)
-    
-    # 標題 + 退賽馬
-    withdrawn = df[df['總投注量'] == 0]['horse'].tolist()
-    title = "賽馬即時氣泡圖（matplotlib 純粹版）"
-    if withdrawn:
-        title += f"　　退賽：{', '.join(withdrawn)}"
-    ax.set_title(title, fontsize=20, pad=25)
-    
-    # 背景微微透明
-    fig.patch.set_facecolor('#fafafa')
-    
-    # === 直接輸出！完全不閃、不會重複、不用任何 state ===
-    st.pyplot(fig, use_container_width=True)
+        sizes = df_plot['總投注量']
+        bubble_sizes = 25 + (sizes - sizes.min()) / (sizes.max() - sizes.min() + 1e-6) * 85
+        # matplotlib 要平方才像真氣泡
+        plot_sizes = bubble_sizes ** 2 * 8
+        
+        # === 開始畫圖（每次都全新畫一張，乾淨俐落）===
+        fig = plt.figure(figsize=(10, 10), facecolor='white')
+        ax = fig.add_subplot(111)
+        
+        # 強制正方形 + 正圓氣泡
+        ax.set_aspect('equal', adjustable='box')
+        
+        # 十字軸（永遠固定在中間）
+        ax.axhline(0, color='black', linewidth=3, zorder=5)
+        ax.axvline(0, color='black', linewidth=3, zorder=5)
+        
+        # 畫氣泡（紅藍自動分）
+        scatter = ax.scatter(
+            df_plot['ΔQ'], df_plot['ΔI'],
+            s=plot_sizes,
+            c=df_plot['ΔI'],
+            cmap='RdBu_r',
+            alpha=0.82,
+            edgecolors='white',
+            linewidths=3.5,
+            zorder=10
+        )
+        
+        # 馬號寫在正中間（粗白字）
+        for _, row in df_plot.iterrows():
+            ax.text(row['ΔQ'], row['ΔI'], row['horse'],
+                    ha='center', va='center',
+                    fontsize=15, fontweight='bold', color='white',
+                    zorder=20)
+        
+        # 自動邊界（十字永遠在中間）
+        margin = max(abs(df_plot['ΔQ']).max(), abs(df_plot['ΔI']).max()) * 0.3
+        margin = max(margin, 300)  # 至少留點空間
+        ax.set_xlim(-margin - df_plot['ΔQ'].max()*0.1, margin + df_plot['ΔQ'].max()*0.1)
+        ax.set_ylim(-margin - df_plot['ΔI'].max()*0.1, margin + df_plot['ΔI'].max()*0.1)
+        
+        # 美化
+        ax.set_xlabel('與理想投注額差距（張）', fontsize=16)
+        ax.set_ylabel('庫存部位差距（張）', fontsize=16)
+        ax.grid(True, alpha=0.25, zorder=0)
+        
+        # 標題 + 退賽馬
+        withdrawn = df[df['總投注量'] == 0]['horse'].tolist()
+        title = f"賽馬即時氣泡圖 {method}"
+        ax.set_title(title, fontsize=20, pad=25)
+        
+        # 背景微微透明
+        fig.patch.set_facecolor('#fafafa')
+        
+        # === 直接輸出！完全不閃、不會重複、不用任何 state ===
+        st.pyplot(fig, use_container_width=True)
 
 def main(time_now,odds,investments,period):
   save_odds_data(time_now,odds)
