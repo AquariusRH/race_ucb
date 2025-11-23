@@ -1012,7 +1012,7 @@ def print_bubble():
             continue
     total_volume = total_volume_raw.copy()          
     df = pd.DataFrame({
-        'horse': total_volume.index.astype(str),
+        'horse': total_volume.columns.astype(str),
         'ΔI': delta_I.values.round(0).astype(float),
         'ΔQ': delta_Q.values.round(0).astype(float),
         '總投注量': total_volume.values.round(0).astype(int)
