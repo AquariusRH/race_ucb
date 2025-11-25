@@ -1003,11 +1003,13 @@ def print_bubble():
               delta_I = st.session_state.diff_dict['WIN'].tail(10).sum(axis = 0) 
               delta_Q = st.session_state.diff_dict['QIN'].tail(10).sum(axis = 0)
               odds_list = st.session_state.odds_dict['WIN']
+              method_name = ['WIN','QIN']
         elif method == 'PLA&QPL':
               total_volume_raw = st.session_state.overall_investment_dict['PLA'] + st.session_state.overall_investment_dict['QPL']
               delta_I = st.session_state.diff_dict['PLA'].tail(10).sum(axis=0)
               delta_Q = st.session_state.diff_dict['QPL'].tail(10).sum(axis=0)
               odds_list = st.session_state.odds_dict['PLA']
+              method_name = ['PLA','QPL']
         if total_volume_raw.empty:
             continue
         total_volume = total_volume_raw.copy()          
@@ -1050,8 +1052,8 @@ def print_bubble():
             ),
             hovertemplate=
                 "<b>馬號：%{text}</b><br>" +
-                "庫存差距：%{y:+,} K<br>" +
-                "理想差距：%{x:+,} K<br>" +
+                f"{method_name[0]}差距：%{y:+,} K<br>" +
+                f"{method_name[1]}差距：%{x:+,} K<br>" +
                 "總投注量：%{customdata:,} K<extra></extra>",
             customdata=df['總投注量'][df['visible']].values
         ))
@@ -1063,8 +1065,8 @@ def print_bubble():
 
         fig.update_layout(
             title=f"{method}氣泡圖",
-            xaxis_title="WIN/PLA（K）",
-            yaxis_title="QIN/QPL（K）",
+            xaxis_title=f"{method_name[0]}（K）",
+            yaxis_title=f"{method_name[1]}（K）",
             template="plotly_white",
             height=720,
             width=900,
