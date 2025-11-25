@@ -1052,8 +1052,8 @@ def print_bubble():
             ),
             hovertemplate=
                 "<b>馬號：%{text}</b><br>" +
-                f"{method_name[0]}差距：%{y:+,} K<br>" +
-                f"{method_name[1]}差距：%{x:+,} K<br>" +
+                f"{method_name[0]}" + "差距：%{y:+,} K<br>" +
+                f"{method_name[1]}" + "差距：%{x:+,} K<br>" +
                 "總投注量：%{customdata:,} K<extra></extra>",
             customdata=df['總投注量'][df['visible']].values
         ))
