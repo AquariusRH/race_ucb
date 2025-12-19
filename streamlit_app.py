@@ -965,7 +965,7 @@ def print_ucb():
             
                 st.subheader(f"第 {race_no} 場 UCB 即時預測（第 {latest_t} 次更新）")
                 if df_display is not None:
-                    st.dataframe(df_display, use_container_width=True)
+                    st.dataframe(df_display, width='stretch')
                   
 def print_momentum():
               # --- 全新動量分析區 ---
@@ -987,7 +987,7 @@ def print_momentum():
             if not df_mom.empty:
                 st.dataframe(df_mom.style.apply(
                     lambda row: ['background-color: #ffcccc' if row['狀態'] == '爆量' else '' for _ in row], axis=1
-                ), use_container_width=True)
+                ), width='stretch')
             
             if fig:
                 st.pyplot(fig)
@@ -1076,7 +1076,7 @@ def print_bubble():
             yaxis=dict(tickformat=",", zeroline=True),
             dragmode=False
         )
-        st.plotly_chart(fig, use_container_width=True, key=f"{total_volume_raw.index.astype(str)} {method}")  
+        st.plotly_chart(fig, width='stretch', key=f"{total_volume_raw.index.astype(str)} {method}")  
         
 def main(time_now,odds,investments,period):
   save_odds_data(time_now,odds)
@@ -1410,7 +1410,7 @@ ucb_placeholder= st.container()
 if st.session_state.api_called and race_no in st.session_state.race_dataframes:
     with top_container:
         st.write(f"第 {race_no} 場 賽事資料")
-        st.dataframe(st.session_state.race_dataframes[race_no], use_container_width=True)
+        st.dataframe(st.session_state.race_dataframes[race_no], width='stretch')
 else:
     st.info("請先點「開始」載入賽事資料")
 
