@@ -326,8 +326,8 @@ def get_overall_investment(time_now,dict):
 
 def print_bar_chart(time_now):
   post_time = st.session_state.post_time_dict[race_no]
-  time_25_minutes_before = np.datetime64(post_time - timedelta(minutes=25) + timedelta(hours=8))
-  time_5_minutes_before = np.datetime64(post_time - timedelta(minutes=5) + timedelta(hours=8))
+  time_25_minutes_before = np.datetime64((post_time - timedelta(minutes=25) + timedelta(hours=8)).replace(tzinfo=None))
+  time_5_minutes_before = np.datetime64((post_time - timedelta(minutes=5) + timedelta(hours=8)).replace(tzinfo=None))
   
   for method in print_list:
       odds_list = pd.DataFrame()
